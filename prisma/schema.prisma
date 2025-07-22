@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User 模型 - 與 Better Auth 兼容
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  emailVerified   Boolean   @default(false) @map("email_verified")
+  username        String?   @unique
+  name            String?
+  image           String?
+  
+  // 遊戲專用欄位
+  isActive        Boolean   @default(true) @map("is_active")
+  userRole        String    @default("PLAYER") @map("user_role")
+  lastLoginAt     DateTime? @map("last_login_at")
+  
+  // 時間戳記
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  // 關聯 - Better Auth 需要
+  sessions        Session[]
+  accounts        Account[]
+  gameCharacter   GameCharacter?
+  
+  @@map("users")
+}
+
+// Session 模型 - Better Auth 需要
+model Session {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+// Account 模型 - Better Auth OAuth 支援
+model Account {
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// 遊戲角色模型 - 與 Next.js 兼容
+model GameCharacter {
+  id            String    @id @default(uuid())
+  characterName String    @map("character_name")
+  level         Int       @default(1)
+  experience    Int       @default(0)
+  health        Int       @default(100)
+  maxHealth     Int       @default(100) @map("max_health")
+  mana          Int       @default(50)
+  maxMana       Int       @default(50) @map("max_mana")
+  
+  // 五大屬性
+  strength      Int       @default(10)
+  dexterity     Int       @default(10)
+  intelligence  Int       @default(10)
+  vitality      Int       @default(10)
+  luck          Int       @default(10)
+  
+  // NestJS 遊戲專用欄位
+  availableStatPoints Int @default(5) @map("available_stat_points")
+  goldAmount         Int @default(0) @map("gold_amount")
+  currentMapLocation String @default("starter_town") @map("current_map_location")
+  positionX          Float @default(0) @map("position_x")
+  positionY          Float @default(0) @map("position_y")
+  lastSaveTimestamp  DateTime @default(now()) @map("last_save_timestamp")
+  
+  // 時間戳記
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  // 一對一關聯 - 每個用戶只能有一個角色
+  userId        String    @unique @map("user_id")
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("game_characters")
+}
+
+// Verification Token 模型 - Better Auth 需要 
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}

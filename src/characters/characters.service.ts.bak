@@ -1,0 +1,206 @@
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateCharacterDto } from './dto/create-character.dto';
+import { UpdateCharacterDto, AllocateStatsDto } from './dto/update-character.dto';
+
+@Injectable()
+export class CharactersService {
+  constructor(private prisma: PrismaService) {}
+
+  async create(userId: string, createCharacterDto: CreateCharacterDto) {
+    // 檢查用戶是否已有角色
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { gameCharacter: true },
+    });
+
+    if (existingUser?.gameCharacter) {
+      throw new BadRequestException('用戶已經有一個角色了，無法創建更多角色');
+    }
+
+    // 檢查角色名稱是否已存在
+    const existingCharacter = await this.prisma.gameCharacter.findUnique({
+      where: { characterName: createCharacterDto.name },
+    });
+
+    if (existingCharacter) {
+      throw new BadRequestException('角色名稱已被使用，請選擇其他名稱');
+    }
+
+    return this.prisma.gameCharacter.create({
+      data: {
+        characterName: createCharacterDto.name,
+        userId,
+        // 其他欄位使用 Schema 的預設值
+      },
+      include: {
+        gameUser: true,
+      },
+    });
+  }
+
+  async findByUser(userId: string) {
+    return this.prisma.gameCharacter.findUnique({
+      where: { userId },
+      include: {
+        gameUser: true,
+      },
+    });
+  }
+
+  async canCreateCharacter(userId: string): Promise<boolean> {
+    const existingCharacter = await this.prisma.gameCharacter.findUnique({
+      where: { userId },
+    });
+    return !existingCharacter;
+  }
+
+  async findOne(id: string): Promise<Character> {
+    const character = await this.charactersRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
+
+    if (!character) {
+      throw new NotFoundException(`Character with ID ${id} not found`);
+    }
+
+    return character;
+  }
+
+  async update(id: string, updateCharacterDto: UpdateCharacterDto): Promise<Character> {
+    const character = await this.findOne(id);
+    
+    Object.assign(character, updateCharacterDto);
+    character.lastSaveAt = new Date();
+    
+    return this.charactersRepository.save(character);
+  }
+
+  async allocateStats(id: string, allocateStatsDto: AllocateStatsDto): Promise<Character> {
+    const character = await this.findOne(id);
+    
+    // 計算總共要分配的點數
+    const totalPointsToAllocate = 
+      (allocateStatsDto.strength || 0) +
+      (allocateStatsDto.dexterity || 0) +
+      (allocateStatsDto.intelligence || 0) +
+      (allocateStatsDto.vitality || 0) +
+      (allocateStatsDto.luck || 0);
+
+    if (totalPointsToAllocate > character.availableStatPoints) {
+      throw new BadRequestException('Not enough stat points available');
+    }
+
+    // 分配屬性點
+    if (allocateStatsDto.strength) {
+      character.strength += allocateStatsDto.strength;
+    }
+    if (allocateStatsDto.dexterity) {
+      character.dexterity += allocateStatsDto.dexterity;
+    }
+    if (allocateStatsDto.intelligence) {
+      character.intelligence += allocateStatsDto.intelligence;
+    }
+    if (allocateStatsDto.vitality) {
+      character.vitality += allocateStatsDto.vitality;
+      // 體質影響最大HP
+      character.maxHp += allocateStatsDto.vitality * 5;
+    }
+    if (allocateStatsDto.luck) {
+      character.luck += allocateStatsDto.luck;
+    }
+
+    // 扣除已使用的點數
+    character.availableStatPoints -= totalPointsToAllocate;
+
+    return this.charactersRepository.save(character);
+  }
+
+  async gainExperience(id: string, expGain: number): Promise<Character> {
+    const character = await this.findOne(id);
+    
+    character.experience += expGain;
+    
+    // 檢查是否升級
+    while (character.experience >= character.experienceToNextLevel) {
+      character.experience -= character.experienceToNextLevel;
+      character.level += 1;
+      character.availableStatPoints += 5; // 每升級獲得5點屬性點
+      
+      // 升級時增加基礎數值
+      const hpIncrease = 10 + Math.floor(character.vitality * 0.5);
+      const mpIncrease = 5 + Math.floor(character.intelligence * 0.3);
+      
+      character.maxHp += hpIncrease;
+      character.maxMp += mpIncrease;
+      character.hp = character.maxHp; // 升級時回滿血
+      character.mp = character.maxMp; // 升級時回滿魔
+      
+      // 計算下一級所需經驗值 (指數增長)
+      character.experienceToNextLevel = Math.floor(100 * Math.pow(1.2, character.level - 1));
+    }
+    
+    return this.charactersRepository.save(character);
+  }
+
+  async heal(id: string, hpAmount: number = 0, mpAmount: number = 0): Promise<Character> {
+    const character = await this.findOne(id);
+    
+    character.hp = Math.min(character.hp + hpAmount, character.maxHp);
+    character.mp = Math.min(character.mp + mpAmount, character.maxMp);
+    
+    return this.charactersRepository.save(character);
+  }
+
+  async takeDamage(id: string, damage: number): Promise<Character> {
+    const character = await this.findOne(id);
+    
+    character.hp = Math.max(character.hp - damage, 0);
+    
+    return this.charactersRepository.save(character);
+  }
+
+  async remove(id: string): Promise<void> {
+    const character = await this.findOne(id);
+    await this.charactersRepository.remove(character);
+  }
+
+  async getCharacterStats(id: string) {
+    const character = await this.findOne(id);
+    
+    return {
+      basic: {
+        hp: character.hp,
+        maxHp: character.maxHp,
+        mp: character.mp,
+        maxMp: character.maxMp,
+        level: character.level,
+        experience: character.experience,
+        experienceToNextLevel: character.experienceToNextLevel,
+        gold: character.gold,
+      },
+      attributes: {
+        strength: character.strength,
+        dexterity: character.dexterity,
+        intelligence: character.intelligence,
+        vitality: character.vitality,
+        luck: character.luck,
+        availableStatPoints: character.availableStatPoints,
+      },
+      combat: {
+        physicalAttack: character.physicalAttack,
+        magicalAttack: character.magicalAttack,
+        defense: character.defense,
+        accuracy: character.accuracy,
+        evasion: character.evasion,
+        criticalRate: character.criticalRate,
+      },
+      position: {
+        currentMap: character.currentMap,
+        x: character.positionX,
+        y: character.positionY,
+      },
+    };
+  }
+}
