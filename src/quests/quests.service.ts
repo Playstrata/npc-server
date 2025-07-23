@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NpcsService } from '../npcs/npcs.service';
 
 export enum QuestType {
   GATHER = 'GATHER',      // 收集任務
@@ -63,7 +64,10 @@ interface QuestData {
 
 @Injectable()
 export class QuestsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => NpcsService)) private npcsService: NpcsService
+  ) {}
 
   /**
    * 獲取玩家的所有任務
@@ -318,6 +322,61 @@ export class QuestsService {
     // 更新任務狀態
     quest.status = QuestStatus.SUBMITTED;
 
+    // 計算任務完成時間獎勵/懲罰
+    let timeImpact = 0;
+    let description = `完成了任務「${quest.title}」`;
+    
+    if (quest.acceptedAt && quest.completedAt) {
+      const completionTimeHours = (quest.completedAt.getTime() - quest.acceptedAt.getTime()) / (1000 * 60 * 60);
+      const expectedTimeByDifficulty = {
+        [QuestDifficulty.EASY]: 0.5, // 30分鐘
+        [QuestDifficulty.NORMAL]: 1, // 1小時
+        [QuestDifficulty.HARD]: 2,   // 2小時
+        [QuestDifficulty.EPIC]: 4    // 4小時
+      };
+      
+      const expectedTime = expectedTimeByDifficulty[quest.difficulty] || 1;
+      const timeRatio = completionTimeHours / expectedTime;
+      
+      if (timeRatio <= 0.5) {
+        timeImpact = 8; // 快速完成獎勵
+        description += '（超快速完成！）';
+      } else if (timeRatio <= 0.75) {
+        timeImpact = 5; // 快速完成
+        description += '（快速完成）';
+      } else if (timeRatio <= 1.0) {
+        timeImpact = 3; // 正常完成
+        description += '（按時完成）';
+      } else if (timeRatio <= 1.5) {
+        timeImpact = 1; // 輕微延遲
+        description += '（稍有延遲）';
+      } else if (timeRatio <= 2.0) {
+        timeImpact = -2; // 明顯延遲
+        description += '（明顯延遲）';
+      } else {
+        timeImpact = -5; // 嚴重延遲
+        description += '（嚴重延遲）';
+      }
+    } else {
+      timeImpact = 3; // 預設正面影響
+    }
+
+    // 觸發村莊聲譽變化
+    if (quest.npcId && this.npcsService) {
+      try {
+        await this.npcsService.broadcastVillageNews(
+          userId,
+          'quest_completed',
+          quest.npcId,
+          description,
+          timeImpact
+        );
+        console.log(`[QuestsService] 村莊聲譽更新: ${description} (影響: ${timeImpact})`);
+      } catch (error) {
+        console.error('[QuestsService] 更新村莊聲譽失敗:', error);
+      }
+    }
+
     console.log(`[QuestsService] 任務提交成功: ${quest.title}，獎勵: ${quest.rewards.experience} EXP, ${quest.rewards.gold} Gold`);
 
     return {
@@ -339,6 +398,56 @@ export class QuestsService {
 
     if (quest.status !== QuestStatus.ACCEPTED) {
       throw new BadRequestException('只能放棄已接受的任務');
+    }
+
+    // 計算放棄任務的負面影響
+    let abandonImpact = -5; // 基本懲罰
+    let description = `放棄了任務「${quest.title}」`;
+    
+    // 根據難度調整懲罰
+    switch (quest.difficulty) {
+      case QuestDifficulty.EASY:
+        abandonImpact = -3;
+        break;
+      case QuestDifficulty.NORMAL:
+        abandonImpact = -5;
+        break;
+      case QuestDifficulty.HARD:
+        abandonImpact = -7;
+        break;
+      case QuestDifficulty.EPIC:
+        abandonImpact = -10;
+        description += '（重要任務！）';
+        break;
+    }
+
+    // 根據任務進度調整影響
+    const totalProgress = quest.objectives.reduce((sum, obj) => sum + obj.currentProgress, 0);
+    const totalRequired = quest.objectives.reduce((sum, obj) => sum + obj.requiredProgress, 0);
+    const progressRatio = totalRequired > 0 ? totalProgress / totalRequired : 0;
+    
+    if (progressRatio > 0.8) {
+      abandonImpact -= 3; // 接近完成時放棄，額外懲罰
+      description += '（接近完成時放棄）';
+    } else if (progressRatio > 0.5) {
+      abandonImpact -= 1; // 中途放棄
+      description += '（中途放棄）';
+    }
+
+    // 觸發村莊聲譽變化
+    if (quest.npcId && this.npcsService) {
+      try {
+        await this.npcsService.broadcastVillageNews(
+          userId,
+          'quest_failed',
+          quest.npcId,
+          description,
+          abandonImpact
+        );
+        console.log(`[QuestsService] 村莊聲譽更新: ${description} (影響: ${abandonImpact})`);
+      } catch (error) {
+        console.error('[QuestsService] 更新村莊聲譽失敗:', error);
+      }
     }
 
     // 重置任務狀態

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -11,6 +12,11 @@ import { NpcsModule } from './npcs/npcs.module';
 import { ItemsModule } from './items/items.module';
 import { GameModule } from './game/game.module';
 import { ChatModule } from './chat/chat.module';
+import { SkillsModule } from './skills/skills.module';
+import { InventoryModule } from './inventory/inventory.module';
+import { DeliveryModule } from './delivery/delivery.module';
+import { StaminaModule } from './stamina/stamina.module';
+import { EquipmentModule } from './equipment/equipment.module';
 
 @Module({
   imports: [
@@ -19,6 +25,9 @@ import { ChatModule } from './chat/chat.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    
+    // 定時任務模組
+    ScheduleModule.forRoot(),
     
     // 資料庫連接
     PrismaModule,
@@ -32,6 +41,11 @@ import { ChatModule } from './chat/chat.module';
     ItemsModule,
     GameModule,
     ChatModule,
+    SkillsModule,
+    InventoryModule,
+    DeliveryModule,
+    StaminaModule,
+    EquipmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

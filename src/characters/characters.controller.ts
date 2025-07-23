@@ -20,6 +20,7 @@ import { CreateCharacterDto } from './dto/create-character.dto';
 import { UpdateCharacterDto, AllocateStatsDto } from './dto/update-character.dto';
 import { BetterAuthGuard } from '../auth/better-auth.guard';
 import { CurrentUser, UserId } from '../auth/better-auth.decorator';
+import { CHARACTER_CLASSES, CLASS_DISPLAY_NAMES } from './character-classes.types';
 
 @ApiTags('characters')
 @Controller('characters')
@@ -49,6 +50,24 @@ export class CharactersController {
   @ApiResponse({ status: 200, description: '返回是否可以創建角色' })
   canCreateCharacter(@UserId() userId: string) {
     return this.charactersService.canCreateCharacter(userId);
+  }
+
+  @Get('classes')
+  @ApiOperation({ summary: '獲取所有可選角色職業' })
+  @ApiResponse({ status: 200, description: '成功獲取職業列表' })
+  getCharacterClasses() {
+    return {
+      success: true,
+      data: Object.values(CHARACTER_CLASSES).map(classData => ({
+        classType: classData.classType,
+        name: classData.name,
+        description: classData.description,
+        baseStats: classData.baseStats,
+        specialAbilities: classData.specialAbilities,
+        startingSkills: classData.startingSkills,
+        preferredWeapons: classData.preferredWeapons
+      }))
+    };
   }
 
   @Get(':id')

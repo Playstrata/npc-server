@@ -84,6 +84,13 @@ model GameCharacter {
   mana          Int       @default(50)
   maxMana       Int       @default(50) @map("max_mana")
   
+  // 法師專用魔法收納系統
+  magicalStorageCapacity Float @default(0.0) @map("magical_storage_capacity") // 魔法收納容量 (只有法師才有)
+  magicalStorageUsed     Float @default(0.0) @map("magical_storage_used") // 已使用的魔法收納空間
+  
+  // 角色職業
+  characterClass String   @default("NOVICE") @map("character_class") // NOVICE, WARRIOR, MAGE, ARCHER, ROGUE
+  
   // 五大屬性
   strength      Int       @default(10)
   dexterity     Int       @default(10)
@@ -99,6 +106,29 @@ model GameCharacter {
   positionY          Float @default(0) @map("position_y")
   lastSaveTimestamp  DateTime @default(now()) @map("last_save_timestamp")
   
+  // 背包與負重系統
+  baseCarryingCapacity Float @default(5.0) @map("base_carrying_capacity") // 雙手基礎容量(公斤)
+  carryingCapacity   Float @default(5.0) @map("carrying_capacity") // 總攜帶容量(含裝備加成)
+  currentWeight      Float @default(0.0) @map("current_weight") // 目前攜帶重量
+  currentVolume      Float @default(0.0) @map("current_volume") // 目前攜帶體積(公升)
+  maxVolume          Float @default(2.0) @map("max_volume") // 最大體積(雙手默認2公升)
+  
+  // 裝備系統
+  equippedBackpack   String? @map("equipped_backpack") // 裝備的背包物品ID
+  equippedWeapon     String? @map("equipped_weapon") // 裝備的武器ID
+  equippedArmor      String? @map("equipped_armor") // 裝備的護甲ID
+  
+  // 耐力系統
+  stamina            Float @default(100.0) // 當前耐力值
+  maxStamina         Float @default(100.0) @map("max_stamina") // 最大耐力值
+  staminaRegenRate   Float @default(1.0) @map("stamina_regen_rate") // 耐力恢復速率/秒
+  lastStaminaUpdate  DateTime @default(now()) @map("last_stamina_update") // 最後耐力更新時間
+  
+  // 移動狀態
+  isResting          Boolean @default(false) @map("is_resting") // 是否在休息
+  restStartTime      DateTime? @map("rest_start_time") // 開始休息時間
+  movementPenalty    Float @default(0.0) @map("movement_penalty") // 移動速度懲罰(0-1)
+  
   // 時間戳記
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
@@ -107,7 +137,97 @@ model GameCharacter {
   userId        String    @unique @map("user_id")
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   
+  // 技能關聯
+  skills        CharacterSkill[]
+  knowledges    CharacterKnowledge[]
+  
+  // 背包關聯
+  inventoryItems PlayerInventory[]
+  
+  // 法師魔法收納關聯
+  magicalStorageItems MagicalStorage[]
+  
+  // 轉職歷史關聯
+  jobChangeHistory JobChangeHistory[]
+  
   @@map("game_characters")
+}
+
+// 角色技能表
+model CharacterSkill {
+  id            String    @id @default(cuid())
+  characterId   String    @map("character_id")
+  skillType     String    @map("skill_type") // COMBAT, MINING, WOODCUTTING 等
+  experience    Int       @default(0)
+  level         String    @default("NOVICE") // NOVICE, APPRENTICE, JOURNEYMAN, EXPERT, MASTER, GRANDMASTER
+  unlockedAt    DateTime  @default(now()) @map("unlocked_at")
+  lastPracticed DateTime? @map("last_practiced")
+  
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  // 關聯
+  character     GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  practiceHistory SkillPracticeHistory[]
+  
+  @@unique([characterId, skillType])
+  @@map("character_skills")
+}
+
+// 角色知識表
+model CharacterKnowledge {
+  id            String    @id @default(cuid())
+  characterId   String    @map("character_id")
+  skillType     String    @map("skill_type")
+  knowledgeType String    @map("knowledge_type") // BASIC, INTERMEDIATE, ADVANCED, MASTER
+  knowledgeName String    @map("knowledge_name")
+  description   String?
+  proficiency   Int       @default(0) // 0-1000
+  learnedAt     DateTime  @default(now()) @map("learned_at")
+  teacherNpcId  String?   @map("teacher_npc_id")
+  
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  // 關聯
+  character     GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  
+  @@unique([characterId, skillType, knowledgeName])
+  @@map("character_knowledges")
+}
+
+// 技能練習歷史表
+model SkillPracticeHistory {
+  id                String          @id @default(cuid())
+  skillId           String          @map("skill_id")
+  practiceType      String          @map("practice_type")
+  practiceIntensity String          @map("practice_intensity") // light, normal, intense
+  experienceGained  Int             @map("experience_gained")
+  proficiencyGained Int             @map("proficiency_gained")
+  knowledgeUsed     String?         @map("knowledge_used")
+  timestamp         DateTime        @default(now())
+  
+  // 關聯
+  skill             CharacterSkill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  
+  @@map("skill_practice_history")
+}
+
+// 技能衰減日誌表
+model SkillDecayLog {
+  id                     String    @id @default(cuid())
+  characterId            String    @map("character_id")
+  skillType              String    @map("skill_type")
+  knowledgeName          String    @map("knowledge_name")
+  eventType              String    @map("event_type") // PROFICIENCY_DECAY, SKILL_RUST, KNOWLEDGE_FADE, TOTAL_FORGET
+  originalValue          Int       @map("original_value")
+  newValue              Int       @map("new_value")
+  decayAmount           Int       @map("decay_amount")
+  daysSinceLastPractice Int       @map("days_since_last_practice")
+  action                String?   // REVIEW, AUTO_DECAY 等
+  timestamp             DateTime  @default(now())
+  
+  @@map("skill_decay_logs")
 }
 
 // Verification Token 模型 - Better Auth 需要 
@@ -119,4 +239,189 @@ model VerificationToken {
   
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+// ====================
+// 背包與物流系統
+// ====================
+
+// 玩家背包物品表
+model PlayerInventory {
+  id            String    @id @default(uuid())
+  characterId   String    @map("character_id")
+  itemId        String    @map("item_id") // 物品ID，對應 items.database.ts
+  quantity      Int       @default(1)
+  quality       String    @default("COMMON") // POOR, COMMON, UNCOMMON, RARE, EPIC, LEGENDARY, ARTIFACT
+  weight        Float     // 單個物品重量(公斤)
+  totalWeight   Float     // 總重量 (quantity * weight)
+  volume        Float     // 單個物品體積(公升)
+  totalVolume   Float     // 總體積 (quantity * volume)
+  slot          Int?      // 背包槽位編號 (可選，用於UI排序)
+  isEquipped    Boolean   @default(false) @map("is_equipped") // 是否裝備中
+  equipmentSlot String?   @map("equipment_slot") // 裝備槽位 (BACKPACK, WEAPON, ARMOR)
+  
+  // 物品狀態
+  condition     Float     @default(100.0) // 物品耐久度 (0-100%)
+  isStackable   Boolean   @default(true) @map("is_stackable") // 是否可堆疊
+  maxStack      Int       @default(99) @map("max_stack") // 最大堆疊數量
+  
+  // 時間戳記
+  acquiredAt    DateTime  @default(now()) @map("acquired_at")
+  lastUsedAt    DateTime? @map("last_used_at")
+  
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  // 關聯
+  character     GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  
+  @@unique([characterId, itemId, quality]) // 同角色、同物品、同品質只能有一筆記錄(可堆疊)
+  @@map("player_inventories")
+}
+
+// 送貨任務表
+model DeliveryQuest {
+  id              String    @id @default(uuid())
+  questId         String    @unique @map("quest_id") // 關聯到主任務系統
+  deliveryType    String    @map("delivery_type") // PLAYER_DELIVERY, NPC_DELIVERY, EMERGENCY
+  
+  // 送貨詳情
+  fromNpcId       String    @map("from_npc_id") // 發貨 NPC
+  toNpcId         String    @map("to_npc_id")   // 收貨 NPC
+  fromLocation    String    @map("from_location") // 起點位置
+  toLocation      String    @map("to_location")   // 終點位置
+  
+  // 物品資訊
+  itemId          String    @map("item_id")
+  itemQuality     String    @map("item_quality")
+  quantity        Int       
+  totalWeight     Float     @map("total_weight") // 總重量
+  
+  // 任務條件
+  requiredCapacity Float    @map("required_capacity") // 所需攜帶能力
+  timeLimit       Int?      @map("time_limit") // 時間限制(分鐘)
+  distance        Float     @default(0.0) // 距離(公尺)
+  difficulty      String    @default("EASY") // EASY, NORMAL, HARD, EXTREME
+  
+  // 獎勵
+  goldReward      Int       @map("gold_reward")
+  experienceReward Int      @map("experience_reward") 
+  reputationReward Int      @map("reputation_reward")
+  
+  // 狀態追蹤
+  status          String    @default("AVAILABLE") // AVAILABLE, IN_PROGRESS, COMPLETED, FAILED, EXPIRED
+  assignedTo      String?   @map("assigned_to") // 接取任務的玩家ID(可選)
+  startedAt       DateTime? @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  
+  // 進度追蹤
+  pickupConfirmed Boolean   @default(false) @map("pickup_confirmed") // 是否已取貨
+  deliveryConfirmed Boolean @default(false) @map("delivery_confirmed") // 是否已送達
+  currentLocation String?   @map("current_location") // 目前位置
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  @@map("delivery_quests")
+}
+
+// NPC 送貨路線表
+model NPCDeliveryRoute {
+  id              String    @id @default(uuid())
+  deliveryNpcId   String    @map("delivery_npc_id") // 送貨員 NPC ID
+  routeName       String    @map("route_name") // 路線名稱
+  
+  // 路線詳情
+  startLocation   String    @map("start_location")
+  endLocation     String    @map("end_location")
+  waypoints       String    @db.Text // JSON 格式的路點資料
+  totalDistance   Float     @map("total_distance") // 總距離
+  estimatedTime   Int       @map("estimated_time") // 預估時間(分鐘)
+  
+  // 運行狀態
+  isActive        Boolean   @default(true) @map("is_active")
+  priority        Int       @default(5) // 路線優先級 (1-10)
+  frequency       String    @default("DAILY") // HOURLY, DAILY, WEEKLY
+  lastRun         DateTime? @map("last_run")
+  nextScheduledRun DateTime? @map("next_scheduled_run")
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  @@map("npc_delivery_routes")
+}
+
+// 物流追蹤記錄表
+model LogisticsTracking {
+  id              String    @id @default(uuid())
+  trackingNumber  String    @unique @map("tracking_number") // 追蹤編號
+  
+  // 關聯資訊
+  deliveryQuestId String?   @map("delivery_quest_id") // 關聯送貨任務
+  routeId         String?   @map("route_id") // 關聯 NPC 路線
+  
+  // 物品資訊
+  itemId          String    @map("item_id")
+  quantity        Int
+  weight          Float
+  
+  // 狀態追蹤
+  status          String    @default("PENDING") // PENDING, PICKED_UP, IN_TRANSIT, DELIVERED, LOST
+  currentLocation String    @map("current_location")
+  
+  // 時間追蹤
+  scheduledPickup DateTime  @map("scheduled_pickup")
+  actualPickup    DateTime? @map("actual_pickup")
+  scheduledDelivery DateTime @map("scheduled_delivery")
+  actualDelivery  DateTime? @map("actual_delivery")
+  
+  // 處理人員
+  handlerType     String    @map("handler_type") // PLAYER, NPC
+  handlerId       String    @map("handler_id") // 玩家ID或NPC ID
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  @@map("logistics_tracking")
+}
+
+// 法師魔法收納表
+model MagicalStorage {
+  id              String    @id @default(uuid())
+  characterId     String    @map("character_id")
+  itemId          String    @map("item_id") // 物品ID
+  quantity        Int       @default(1)
+  quality         String    @default("COMMON") // 物品品質
+  manaUsed        Float     @map("mana_used") // 儲存該物品消耗的魔力
+  storedAt        DateTime  @default(now()) @map("stored_at")
+  lastAccessedAt  DateTime? @map("last_accessed_at")
+  
+  // 關聯
+  character       GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  @@map("magical_storage")
+}
+
+// 轉職歷史表
+model JobChangeHistory {
+  id              String    @id @default(uuid())
+  characterId     String    @map("character_id")
+  fromClass       String    @map("from_class")
+  toClass         String    @map("to_class")
+  changedAt       DateTime  @default(now()) @map("changed_at")
+  npcTrainerId    String    @map("npc_trainer_id")
+  costPaid        Int       @map("cost_paid")
+  levelAtChange   Int       @map("level_at_change")
+  notes           String?   // 轉職備註
+  
+  // 關聯
+  character       GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  @@map("job_change_history")
 }
