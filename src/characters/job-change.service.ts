@@ -9,6 +9,7 @@ import {
   JobChangeResult,
   CLASS_DISPLAY_NAMES
 } from './character-classes.types';
+import { LuckService, LuckEvent } from './luck.service';
 
 @Injectable()
 export class JobChangeService {
@@ -16,7 +17,8 @@ export class JobChangeService {
 
   constructor(
     private prisma: PrismaService,
-    private skillsService: SkillsService
+    private skillsService: SkillsService,
+    private luckService: LuckService
   ) {}
 
   /**
@@ -29,7 +31,13 @@ export class JobChangeService {
     const character = await this.prisma.gameCharacter.findUnique({
       where: { id: characterId },
       include: {
-        knowledges: true
+        knowledges: {
+          select: {
+            skillType: true,
+            knowledgeName: true,
+            proficiency: true
+          }
+        }
       }
     });
 
@@ -37,8 +45,12 @@ export class JobChangeService {
       throw new BadRequestException('角色不存在');
     }
 
-    // 獲取角色已學習的知識列表
-    const learnedKnowledge = character.knowledges.map(k => k.knowledgeName);
+    // 獲取角色已學習的知識列表（包含熟練度）
+    const learnedKnowledge = character.knowledges.map(k => ({
+      skillType: k.skillType,
+      knowledgeName: k.knowledgeName,
+      proficiency: k.proficiency
+    }));
 
     // 檢查轉職條件
     const eligibilityCheck = canChangeToJob(
@@ -49,8 +61,8 @@ export class JobChangeService {
         strength: character.strength,
         dexterity: character.dexterity,
         intelligence: character.intelligence,
-        vitality: character.vitality,
-        luck: character.luck
+        stamina: character.stamina
+        // luck為隱藏屬性，不在轉職檢查中使用
       },
       character.mana,
       learnedKnowledge,
@@ -82,7 +94,13 @@ export class JobChangeService {
     const character = await this.prisma.gameCharacter.findUnique({
       where: { id: characterId },
       include: {
-        knowledges: true
+        knowledges: {
+          select: {
+            skillType: true,
+            knowledgeName: true,
+            proficiency: true
+          }
+        }
       }
     });
 
@@ -216,6 +234,17 @@ export class JobChangeService {
               this.logger.warn(`[JobChangeService] 給予起始技能失敗: ${skillType}`, error);
             }
           }
+        }
+
+        // 觸發轉職成功幸運事件
+        try {
+          await this.luckService.triggerLuckEvent(
+            characterId, 
+            LuckEvent.JOB_CHANGE_SUCCESS, 
+            `從${CLASS_DISPLAY_NAMES[oldClass]}轉職為${CLASS_DISPLAY_NAMES[targetClass]}`
+          );
+        } catch (error) {
+          this.logger.warn('[JobChangeService] 觸發轉職幸運事件失敗:', error);
         }
       });
 

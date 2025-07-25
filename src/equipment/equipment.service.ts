@@ -74,7 +74,12 @@ export class EquipmentService {
       select: {
         equippedBackpack: true,
         equippedWeapon: true,
-        equippedArmor: true
+        equippedArmor: true,
+        equippedShirt: true,
+        equippedPants: true,
+        equippedShoes: true,
+        equippedGloves: true,
+        equippedShield: true
       }
     });
 
@@ -138,11 +143,20 @@ export class EquipmentService {
       }
     }
 
-    // 獲取護甲資訊
-    if (character.equippedArmor) {
+    // 獲取護甲資訊 (檢查所有護甲槽位)
+    const armorSlots = [
+      character.equippedArmor,
+      character.equippedShirt,
+      character.equippedPants,
+      character.equippedShoes,
+      character.equippedGloves,
+      character.equippedShield
+    ].filter(Boolean);
+    
+    if (armorSlots.length > 0) {
       const armorItem = await this.prisma.playerInventory.findFirst({
         where: {
-          itemId: character.equippedArmor,
+          itemId: { in: armorSlots },
           characterId,
           isEquipped: true,
           equipmentSlot: EquipmentSlot.ARMOR
@@ -391,7 +405,7 @@ export class EquipmentService {
       where: { id: characterId },
       select: {
         strength: true,
-        vitality: true,
+        baseStamina: true,
         baseCarryingCapacity: true,
         equippedBackpack: true
       }
@@ -404,7 +418,7 @@ export class EquipmentService {
     // 基礎容量計算
     const baseCapacity = character.baseCarryingCapacity; // 雙手基礎 5kg
     const strengthBonus = character.strength * 2; // 每點力量+2kg
-    const vitalityBonus = character.vitality * 0.5; // 每點體力+0.5kg
+    const vitalityBonus = character.baseStamina * 0.5; // 每點體力+0.5kg
 
     // 背包加成
     let backpackBonus = 0;
@@ -483,7 +497,7 @@ export class EquipmentService {
     // 計算卸下背包後的容量
     const character = await this.prisma.gameCharacter.findUnique({
       where: { id: characterId },
-      select: { strength: true, vitality: true, baseCarryingCapacity: true }
+      select: { strength: true, baseStamina: true, baseCarryingCapacity: true }
     });
 
     if (!character) {
@@ -492,7 +506,7 @@ export class EquipmentService {
 
     const handsOnlyCapacity = character.baseCarryingCapacity + 
                              character.strength * 2 + 
-                             character.vitality * 0.5;
+                             character.baseStamina * 0.5;
     const handsOnlyVolume = 2.0;
     const handsOnlySlots = 8;
 

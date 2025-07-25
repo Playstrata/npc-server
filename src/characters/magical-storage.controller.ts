@@ -8,7 +8,7 @@ import {
   Query,
   UseGuards 
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthGuard, Session } from '@thallesp/nestjs-better-auth';
 import { MagicalStorageService } from './magical-storage.service';
 import { ItemQuality } from '../items/items.types';
 
@@ -24,7 +24,7 @@ interface RetrieveItemDto {
 }
 
 @Controller('magical-storage')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard)
 export class MagicalStorageController {
   constructor(private readonly magicalStorageService: MagicalStorageService) {}
 

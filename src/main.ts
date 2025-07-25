@@ -4,7 +4,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Better Auth 需要禁用 NestJS 的 body parser
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: false,
+  });
 
   // 啟用 CORS (支援 Better Auth cookies)
   app.enableCors({
@@ -59,3 +62,9 @@ async function bootstrap() {
   console.log(`🚀 Freedom World Server is running on: http://localhost:${port}`);
   console.log(`📚 API Documentation: http://localhost:${port}/api`);
 }
+
+// 啟動應用程式
+bootstrap().catch((error) => {
+  console.error('❌ Failed to start server:', error);
+  process.exit(1);
+});

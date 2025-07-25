@@ -71,7 +71,7 @@ interface SkillData {
 }
 
 // 玩家技能進度
-interface PlayerSkills {
+export interface PlayerSkills {
   playerId: string;
   skills: { [skillType: string]: SkillData };
   totalSkillPoints: number;
@@ -499,5 +499,30 @@ export class SkillsService {
     };
     
     return baseProficiencies[skillType] || 10;
+  }
+
+  async gainExperience(characterId: string, skillType: SkillType, experienceAmount: number, knowledgeName?: string) {
+    // 如果有指定的知識名稱，更新該知識的熟練度
+    if (knowledgeName) {
+      const knowledge = await this.prisma.characterKnowledge.findFirst({
+        where: {
+          characterId,
+          skillType: skillType.toString(),
+          knowledgeName
+        }
+      });
+
+      if (knowledge) {
+        await this.prisma.characterKnowledge.update({
+          where: { id: knowledge.id },
+          data: {
+            proficiency: knowledge.proficiency + experienceAmount
+          }
+        });
+      }
+    }
+
+    // 也可以在這裡添加通用的技能經驗邏輯
+    return { success: true, experienceGained: experienceAmount };
   }
 }

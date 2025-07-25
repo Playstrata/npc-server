@@ -101,6 +101,7 @@ export interface BaseItem {
     strength?: number;
     dexterity?: number;
     intelligence?: number;
+    stamina?: number;
   };
   craftingInfo?: {         // 製作資訊
     recipe: Array<{

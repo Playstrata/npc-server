@@ -185,7 +185,7 @@ export class DeliveryService {
 
     // 計算任務參數
     const quantity = Math.floor(Math.random() * 10) + 1; // 1-10個
-    const itemWeight = item.weight || 1;
+    const itemWeight = item.attributes?.weight || 1;
     const totalWeight = itemWeight * quantity;
     const distance = this.calculateDistance(supplier.location, customer.location);
     const difficulty = this.calculateDifficulty(totalWeight, distance);

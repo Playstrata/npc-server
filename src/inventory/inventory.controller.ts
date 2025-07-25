@@ -305,7 +305,7 @@ export class InventoryController {
       uniqueItems: items.length,
       equipmentCount: items.filter(item => item.item.type === 'WEAPON' || item.item.type === 'ARMOR').length,
       consumableCount: items.filter(item => item.item.type === 'CONSUMABLE').length,
-      materialCount: items.filter(item => item.item.type === 'MATERIAL').length,
+      materialCount: items.filter(item => item.item.type === 'RAW_MATERIAL').length,
       toolCount: items.filter(item => item.item.type === 'TOOL').length
     };
 

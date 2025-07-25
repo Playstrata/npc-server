@@ -47,14 +47,6 @@ export class MagicalStorageService {
   private async validateMageCharacter(characterId: string): Promise<any> {
     const character = await this.prisma.gameCharacter.findUnique({
       where: { id: characterId },
-      select: {
-        characterClass: true,
-        intelligence: true,
-        mana: true,
-        maxMana: true,
-        magicalStorageCapacity: true,
-        magicalStorageUsed: true
-      },
       include: {
         knowledges: true
       }
@@ -222,7 +214,7 @@ export class MagicalStorageService {
       };
     }
 
-    const itemWeight = (item.attributes?.weight || item.weight || 0) * quantity;
+    const itemWeight = (item.attributes?.weight || 0) * quantity;
     const manaRequired = calculateStorageMana(itemWeight, quality);
 
     // 檢查魔力是否足夠
@@ -403,7 +395,7 @@ export class MagicalStorageService {
       };
     }
 
-    const itemWeight = (item.attributes?.weight || item.weight || 0);
+    const itemWeight = (item.attributes?.weight || 0);
     const totalRetrieveWeight = itemWeight * retrieveQuantity;
 
     // 檢查背包負重
@@ -452,6 +444,7 @@ export class MagicalStorageService {
             }
           });
         } else {
+          const itemVolume = item.attributes?.volume || 0;
           await prisma.playerInventory.create({
             data: {
               characterId,
@@ -460,6 +453,8 @@ export class MagicalStorageService {
               quality: storageItem.quality,
               weight: itemWeight,
               totalWeight: totalRetrieveWeight,
+              volume: itemVolume,
+              totalVolume: itemVolume * retrieveQuantity,
               isStackable: item.stackable || false,
               maxStack: item.maxStack || 1,
               condition: 100.0

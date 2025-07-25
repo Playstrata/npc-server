@@ -17,6 +17,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { DeliveryModule } from './delivery/delivery.module';
 import { StaminaModule } from './stamina/stamina.module';
 import { EquipmentModule } from './equipment/equipment.module';
+import { CombatModule } from './combat/combat.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { EquipmentModule } from './equipment/equipment.module';
     DeliveryModule,
     StaminaModule,
     EquipmentModule,
+    CombatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

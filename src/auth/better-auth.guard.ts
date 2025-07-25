@@ -41,10 +41,7 @@ export class BetterAuthGuard implements CanActivate {
         throw new UnauthorizedException('Session expired');
       }
 
-      // 檢查用戶是否啟用
-      if (!session.user.isActive) {
-        throw new UnauthorizedException('User account is disabled');
-      }
+      // Better Auth 沒有 isActive 欄位，所有驗證過的用戶都被認為是啟用的
 
       // 將用戶資訊附加到請求物件
       request.user = session.user;

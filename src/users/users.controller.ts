@@ -20,7 +20,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AuthGuard, Session } from '@thallesp/nestjs-better-auth';
 
 @ApiTags('users')
 @Controller('users')
@@ -31,7 +31,7 @@ export class UsersController {
   // 用戶創建已移至 auth/register 端點
 
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: '取得所有用戶列表' })
   @ApiResponse({ status: 200, description: '成功取得用戶列表' })
@@ -40,7 +40,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: '根據ID取得用戶' })
   @ApiParam({ name: 'id', description: '用戶ID' })
@@ -51,7 +51,7 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: '更新用戶資訊' })
   @ApiParam({ name: 'id', description: '用戶ID' })
@@ -62,7 +62,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: '刪除用戶' })
   @ApiParam({ name: 'id', description: '用戶ID' })

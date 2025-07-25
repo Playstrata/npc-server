@@ -1,5 +1,5 @@
-import { Controller, Post, Body, UseGuards, Request, Get, Param, HttpException, HttpStatus } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Controller, Post, Body, UseGuards, Get, Param, HttpException, HttpStatus } from '@nestjs/common';
+import { AuthGuard, Session } from '@thallesp/nestjs-better-auth';
 import { EnhancedDialogueService, PlayerDialogueRequest } from './enhanced-dialogue.service';
 import { DialogueResult } from '../ai/ai.types';
 
@@ -17,7 +17,7 @@ export interface DialogueHistoryDto {
 }
 
 @Controller('dialogue')
-@UseGuards(JwtAuthGuard)
+@UseGuards(AuthGuard)
 export class EnhancedDialogueController {
   constructor(
     private enhancedDialogueService: EnhancedDialogueService
@@ -30,7 +30,7 @@ export class EnhancedDialogueController {
   @Post('chat')
   async chatWithNPC(
     @Body() dialogueRequest: DialogueRequestDto,
-    @Request() req: any
+    @Session() session: any
   ): Promise<{
     success: boolean;
     data?: DialogueResult;
@@ -61,7 +61,7 @@ export class EnhancedDialogueController {
         );
       }
 
-      const playerId = req.user.userId; // 從 JWT token 中獲取用戶ID
+      const playerId = session.user.userId; // 從 JWT token 中獲取用戶ID
       
       const playerDialogueRequest: PlayerDialogueRequest = {
         npcId: dialogueRequest.npcId,
@@ -98,7 +98,7 @@ export class EnhancedDialogueController {
   @Get('history/:npcId')
   async getDialogueHistory(
     @Param('npcId') npcId: string,
-    @Request() req: any
+    @Session() session: any
   ): Promise<{
     success: boolean;
     data?: any[];
@@ -112,7 +112,7 @@ export class EnhancedDialogueController {
         );
       }
 
-      const playerId = req.user.userId;
+      const playerId = session.user.userId;
       
       // 目前返回空陣列，實際實現時應該從資料庫獲取歷史記錄
       const history = [];
@@ -139,7 +139,7 @@ export class EnhancedDialogueController {
    * GET /dialogue/available-npcs
    */
   @Get('available-npcs')
-  async getAvailableNPCs(@Request() req: any): Promise<{
+  async getAvailableNPCs(@Session() session: any): Promise<{
     success: boolean;
     data?: Array<{
       id: string;
@@ -216,7 +216,7 @@ export class EnhancedDialogueController {
   @Get('npc/:npcId/profile')
   async getNPCProfile(
     @Param('npcId') npcId: string,
-    @Request() req: any
+    @Session() session: any
   ): Promise<{
     success: boolean;
     data?: {

@@ -148,7 +148,7 @@ export class InventoryService {
       };
     }
 
-    const itemWeight = item.weight || 0;
+    const itemWeight = item.attributes?.weight || 0;
     const totalAddWeight = itemWeight * quantity;
 
     // 檢查負重限制
@@ -226,6 +226,8 @@ export class InventoryService {
           quality: quality.toString(),
           weight: itemWeight,
           totalWeight: totalAddWeight,
+          volume: item.attributes?.volume || 0,
+          totalVolume: (item.attributes?.volume || 0) * quantity,
           isStackable: item.stackable || false,
           maxStack: item.maxStack || 1,
           condition: 100.0
@@ -395,12 +397,12 @@ export class InventoryService {
     itemId: string
   ): Promise<number> {
     const item = this.itemsService.getItemById(itemId);
-    if (!item || !item.weight) {
+    if (!item || !item.attributes?.weight) {
       return 0;
     }
 
     const capacityInfo = await this.getCarryingCapacityInfo(characterId);
-    return Math.floor(capacityInfo.availableCapacity / item.weight);
+    return Math.floor(capacityInfo.availableCapacity / item.attributes.weight);
   }
 
   /**

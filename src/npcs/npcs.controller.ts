@@ -6,11 +6,14 @@ import {
   Param,
   Query,
   UseGuards,
+  NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
+  ApiBody,
   ApiBearerAuth,
   ApiParam,
   ApiQuery,
@@ -146,28 +149,6 @@ export class NpcsController {
     );
   }
 
-  @Post(':id/dialogue/dynamic')
-  @ApiOperation({ summary: '獲取AI生成的動態對話' })
-  @ApiParam({ name: 'id', description: 'NPC ID' })
-  @ApiResponse({ status: 200, description: '成功生成動態對話' })
-  async getDynamicDialogue(
-    @Param('id') npcId: string,
-    @UserId() userId: string,
-    @Body() contextData: {
-      timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
-      weather?: 'sunny' | 'rainy' | 'cloudy';
-      playerLevel?: number;
-      lastQuestCompleted?: string;
-    },
-  ) {
-    const dialogue = await this.npcsService.generateDynamicDialogue(
-      npcId,
-      userId,
-      contextData,
-    );
-
-    return { dialogue };
-  }
 
   @Get(':id/quests')
   @ApiOperation({ summary: '獲取NPC提供的任務' })
@@ -397,7 +378,8 @@ export class NpcsController {
     try {
       const basePriceNum = parseInt(basePrice);
       const adjustedPrice = await this.npcsService.getAdjustedPrice(npcId, playerId, basePriceNum);
-      const discount = Math.round(((basePriceNum - adjustedPrice) / basePriceNum) * 100);
+      const adjustedPriceNum = Number(adjustedPrice) || basePriceNum;
+      const discount = Math.round(((basePriceNum - adjustedPriceNum) / basePriceNum) * 100);
       
       let reason = '正常價格';
       if (discount > 0) {
@@ -410,7 +392,7 @@ export class NpcsController {
         success: true,
         data: {
           basePrice: basePriceNum,
-          adjustedPrice,
+          adjustedPrice: adjustedPriceNum,
           discount,
           reason
         }
@@ -439,8 +421,8 @@ export class NpcsController {
           enum: ['sunny', 'rainy', 'cloudy'],
           description: '天氣'
         },
-        lastQuestCompleted: { type: 'string', description: '最近完成的任務ID', required: false },
-        recentInteraction: { type: 'boolean', description: '是否最近有互動', required: false }
+        lastQuestCompleted: { type: 'string', description: '最近完成的任務ID' },
+        recentInteraction: { type: 'boolean', description: '是否最近有互動' }
       },
       required: ['timeOfDay', 'weather']
     }

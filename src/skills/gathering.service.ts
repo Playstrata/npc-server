@@ -30,7 +30,7 @@ export enum ResourceType {
 }
 
 // 採集點資料
-interface GatheringNode {
+export interface GatheringNode {
   id: string;
   name: string;
   resourceType: ResourceType;

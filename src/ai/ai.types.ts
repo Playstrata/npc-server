@@ -162,7 +162,7 @@ export interface AIGeneratedResponse {
   emotionalTone: string;               // AI判斷的情感色調
   bodyLanguage?: string;               // 可選的肢體語言描述
   conversationDirection: 'continue' | 'deflect' | 'end'; // 對話走向
-  responseStyle: 'polite' | 'firm' | 'annoyed' | 'disgusted' | 'friendly' | 'dismissive';
+  responseStyle: 'polite' | 'firm' | 'annoyed' | 'disgusted' | 'friendly' | 'dismissive' | 'amused';
 }
 
 // 完整的對話結果

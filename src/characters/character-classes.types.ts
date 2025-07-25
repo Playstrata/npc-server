@@ -10,26 +10,27 @@ export enum CharacterClass {
   ROGUE = 'ROGUE'         // 盜賊 - 敏捷與爆擊
 }
 
-// 職業基本屬性
+// 職業基本屬性（4屬性系統）
 export interface ClassBaseStats {
-  strength: number;
-  dexterity: number;
-  intelligence: number;
-  vitality: number;
-  luck: number;
-  health: number;
-  mana: number;
+  strength: number;     // 力量：影響負重和物理攻擊
+  dexterity: number;    // 敏捷：影響攻擊和移動速度
+  intelligence: number; // 智力：影響技能學習和法術攻擊
+  stamina: number;      // 耐力：影響負重能力
+  health: number;       // 生命值
+  mana: number;         // 魔力值
+  // 幸運值為隱藏屬性，不在基礎屬性中定義
 }
 
-// 職業成長率（每級提升的屬性）
+// 職業成長率（每級提升的戰鬥數值）
 export interface ClassGrowthRates {
-  strengthPerLevel: number;
-  dexterityPerLevel: number;
-  intelligencePerLevel: number;
-  vitalityPerLevel: number;
-  luckPerLevel: number;
-  healthPerLevel: number;
-  manaPerLevel: number;
+  physicalAttackPerLevel: number;    // 物理攻擊成長/級
+  physicalDefensePerLevel: number;   // 物理防禦成長/級  
+  magicalAttackPerLevel: number;     // 魔法攻擊成長/級
+  magicalDefensePerLevel: number;    // 魔法防禦成長/級
+  healthPerLevel: number;            // 生命值成長/級
+  manaPerLevel: number;              // 魔力成長/級
+  // 屬性點由玩家自由分配，不在職業成長率中定義
+  // 幸運值成長由行為決定，不在成長率中定義
 }
 
 // 職業特殊能力
@@ -60,16 +61,16 @@ export interface CharacterClassData {
 // 轉職條件
 export interface JobChangeRequirements {
   minimumLevel: number;           // 最低等級要求
-  attributeRequirements: {        // 屬性要求
+  attributeRequirements: {        // 屬性要求（4屬性系統，Luck為隱藏屬性不在轉職條件中）
     strength?: number;
     dexterity?: number;
     intelligence?: number;
-    vitality?: number;
-    luck?: number;
+    stamina?: number;
   };
   skillRequirements?: {           // 技能要求
     skillType: SkillType;
     knowledgeName: string;        // 需要學會的知識名稱
+    minimumProficiency?: number;  // 最低熟練度要求
   }[];
   questRequirements?: string[];   // 任務要求
   goldCost: number;              // 轉職費用
@@ -114,22 +115,20 @@ export const CHARACTER_CLASSES: Record<CharacterClass, CharacterClassData> = {
     name: '初心者',
     description: '剛踏上冒險旅程的新手，還未確定自己的職業方向，擁有均衡的成長潛力',
     baseStats: {
-      strength: 10,       // 均衡屬性
-      dexterity: 10,
-      intelligence: 10,
-      vitality: 10,
-      luck: 10,
+      strength: 5,        // 均衡屬性（1級基礎5點 + 20點自由分配）
+      dexterity: 5,
+      intelligence: 5,
+      stamina: 5,
       health: 100,        // 標準生命值
       mana: 50           // 標準魔力
     },
     growthRates: {
-      strengthPerLevel: 1.0,     // 均衡成長
-      dexterityPerLevel: 1.0,
-      intelligencePerLevel: 1.0,
-      vitalityPerLevel: 1.0,
-      luckPerLevel: 1.0,
-      healthPerLevel: 5,
-      manaPerLevel: 3
+      physicalAttackPerLevel: 2.0,    // 均衡的物理攻擊成長
+      physicalDefensePerLevel: 1.5,   // 均衡的物理防禦成長
+      magicalAttackPerLevel: 1.5,     // 均衡的魔法攻擊成長
+      magicalDefensePerLevel: 1.5,    // 均衡的魔法防禦成長
+      healthPerLevel: 5,              // 標準生命值成長
+      manaPerLevel: 3                 // 標準魔力成長
     },
     specialAbilities: {
       hasPhysicalCombatBonus: false,   // 無特殊能力
@@ -151,22 +150,20 @@ export const CHARACTER_CLASSES: Record<CharacterClass, CharacterClassData> = {
     name: '劍士',
     description: '近戰專家，擅長使用各種近戰武器，具有高生命值和防禦力',
     baseStats: {
-      strength: 15,      // 劍士力量較高
-      dexterity: 8,
+      strength: 5,       // 基礎值，劍士需要在屬性分配時傾向力量
+      dexterity: 5,
       intelligence: 5,
-      vitality: 12,      // 較高體質
-      luck: 5,
+      stamina: 5,        // 基礎值，劍士需要耐力
       health: 120,       // 較高生命值
       mana: 30          // 較低魔力
     },
     growthRates: {
-      strengthPerLevel: 2.5,
-      dexterityPerLevel: 1.0,
-      intelligencePerLevel: 0.5,
-      vitalityPerLevel: 2.0,
-      luckPerLevel: 0.5,
-      healthPerLevel: 8,
-      manaPerLevel: 2
+      physicalAttackPerLevel: 4.0,    // ⭐ 最高物理攻擊成長（近戰專家）
+      physicalDefensePerLevel: 3.5,   // ⭐ 最高物理防禦成長（防禦專家）
+      magicalAttackPerLevel: 0,       // 無魔法攻擊成長（不會魔法）
+      magicalDefensePerLevel: 2.0,    // 中等魔法防禦成長
+      healthPerLevel: 8,              // ⭐ 最高生命值成長
+      manaPerLevel: 2                 // 低魔力成長
     },
     specialAbilities: {
       hasPhysicalCombatBonus: true,
@@ -189,21 +186,19 @@ export const CHARACTER_CLASSES: Record<CharacterClass, CharacterClassData> = {
     description: '魔法專家，擅長元素魔法和魔法收納技能，具有高魔力值',
     baseStats: {
       strength: 5,
-      dexterity: 7,
-      intelligence: 15,   // 法師智力最高
-      vitality: 8,
-      luck: 10,
+      dexterity: 5,
+      intelligence: 5,    // 基礎值，法師需要在屬性分配時傾向智力
+      stamina: 5,
       health: 80,         // 較低生命值
       mana: 100          // 最高魔力
     },
     growthRates: {
-      strengthPerLevel: 0.5,
-      dexterityPerLevel: 1.0,
-      intelligencePerLevel: 2.5,
-      vitalityPerLevel: 1.0,
-      luckPerLevel: 1.5,
-      healthPerLevel: 4,
-      manaPerLevel: 6
+      physicalAttackPerLevel: 0.8,    // 極低物理攻擊成長
+      physicalDefensePerLevel: 1.0,   // 低物理防禦成長
+      magicalAttackPerLevel: 4.5,     // ⭐ 最高魔法攻擊成長（魔法專家）
+      magicalDefensePerLevel: 3.8,    // ⭐ 最高魔法防禦成長
+      healthPerLevel: 4,              // 低生命值成長
+      manaPerLevel: 6                 // ⭐ 最高魔力成長
     },
     specialAbilities: {
       hasPhysicalCombatBonus: false,
@@ -225,22 +220,20 @@ export const CHARACTER_CLASSES: Record<CharacterClass, CharacterClassData> = {
     name: '弓箭手',
     description: '遠程專家，擅長弓箭和投擲武器，具有高敏捷和精準度',
     baseStats: {
-      strength: 10,
-      dexterity: 15,      // 弓箭手敏捷最高
-      intelligence: 8,
-      vitality: 10,
-      luck: 12,           // 較高幸運
+      strength: 5,
+      dexterity: 5,       // 基礎值，弓箭手需要在屬性分配時傾向敏捷
+      intelligence: 5,
+      stamina: 5,         // 基礎值，弓箭手需要耐力
       health: 100,
       mana: 50
     },
     growthRates: {
-      strengthPerLevel: 1.5,
-      dexterityPerLevel: 2.5,
-      intelligencePerLevel: 1.0,
-      vitalityPerLevel: 1.5,
-      luckPerLevel: 2.0,
-      healthPerLevel: 6,
-      manaPerLevel: 3
+      physicalAttackPerLevel: 3.2,    // 高物理攻擊成長（遠程專家）
+      physicalDefensePerLevel: 2.0,   // 中等物理防禦成長
+      magicalAttackPerLevel: 0,       // 無魔法攻擊成長（不會魔法）
+      magicalDefensePerLevel: 1.8,    // 中低魔法防禦成長
+      healthPerLevel: 6,              // 中等生命值成長
+      manaPerLevel: 3                 // 標準魔力成長
     },
     specialAbilities: {
       hasPhysicalCombatBonus: false,
@@ -262,22 +255,20 @@ export const CHARACTER_CLASSES: Record<CharacterClass, CharacterClassData> = {
     name: '盜賊',
     description: '敏捷專家，擅長潛行、開鎖和爆擊攻擊，具有高爆擊率',
     baseStats: {
-      strength: 8,
-      dexterity: 13,
-      intelligence: 10,
-      vitality: 9,
-      luck: 15,           // 盜賊幸運最高
+      strength: 5,
+      dexterity: 5,       // 基礎值，盜賊需要在屬性分配時傾向敏捷
+      intelligence: 5,
+      stamina: 5,         // 基礎值，盜賊需要耐力
       health: 90,
       mana: 60
     },
     growthRates: {
-      strengthPerLevel: 1.0,
-      dexterityPerLevel: 2.0,
-      intelligencePerLevel: 1.5,
-      vitalityPerLevel: 1.0,
-      luckPerLevel: 2.5,
-      healthPerLevel: 5,
-      manaPerLevel: 4
+      physicalAttackPerLevel: 2.8,    // 高物理攻擊成長（爆擊專家）
+      physicalDefensePerLevel: 1.5,   // 低物理防禦成長（敏捷型）
+      magicalAttackPerLevel: 1.8,     // 中等魔法攻擊成長（輔助魔法）
+      magicalDefensePerLevel: 2.2,    // 中等魔法防禦成長
+      healthPerLevel: 5,              // 標準生命值成長
+      manaPerLevel: 4                 // 中等魔力成長（輔助魔法用）
     },
     specialAbilities: {
       hasPhysicalCombatBonus: false,
@@ -355,13 +346,14 @@ export const JOB_CHANGE_REQUIREMENTS: Record<CharacterClass, JobChangeRequiremen
   [CharacterClass.WARRIOR]: {
     minimumLevel: 10,
     attributeRequirements: {
-      strength: 15,
-      vitality: 12
+      strength: 15,      // 5的倍數
+      stamina: 10        // 5的倍數，替代vitality
     },
     skillRequirements: [
       {
         skillType: SkillType.COMBAT,
-        knowledgeName: '基礎劍術'
+        knowledgeName: '基礎劍術',
+        minimumProficiency: 300     // APPRENTICE等級熟練度
       }
     ],
     goldCost: 1000,
@@ -372,13 +364,14 @@ export const JOB_CHANGE_REQUIREMENTS: Record<CharacterClass, JobChangeRequiremen
   [CharacterClass.MAGE]: {
     minimumLevel: 8, // 法師提前轉職
     attributeRequirements: {
-      intelligence: 12,
-      mana: 80
+      intelligence: 15   // 5的倍數，法師需要更高智力
+      // 移除mana要求，以屬性為主
     },
     skillRequirements: [
       {
         skillType: SkillType.MAGIC,
-        knowledgeName: '魔法基礎理論'
+        knowledgeName: '魔法基礎理論',
+        minimumProficiency: 250     // APPRENTICE等級熟練度
       }
     ],
     goldCost: 1500,
@@ -389,13 +382,15 @@ export const JOB_CHANGE_REQUIREMENTS: Record<CharacterClass, JobChangeRequiremen
   [CharacterClass.ARCHER]: {
     minimumLevel: 10,
     attributeRequirements: {
-      dexterity: 15,
-      luck: 12
+      dexterity: 15,     // 5的倍數
+      stamina: 10        // 5的倍數，弓箭手需要耐力
+      // 移除luck要求，因為是隱藏屬性
     },
     skillRequirements: [
       {
         skillType: SkillType.WOODCUTTING,
-        knowledgeName: '基礎伐木技術'
+        knowledgeName: '基礎伐木技術',
+        minimumProficiency: 320     // JOURNEYMAN等級起始熟練度
       }
     ],
     goldCost: 1200,
@@ -406,13 +401,15 @@ export const JOB_CHANGE_REQUIREMENTS: Record<CharacterClass, JobChangeRequiremen
   [CharacterClass.ROGUE]: {
     minimumLevel: 10,
     attributeRequirements: {
-      luck: 12,
-      dexterity: 13
+      dexterity: 15,     // 5的倍數
+      stamina: 10        // 5的倍數，盜賊需要耐力
+      // 移除luck要求，因為是隱藏屬性
     },
     skillRequirements: [
       {
         skillType: SkillType.TRADING,
-        knowledgeName: '基礎貿易知識'
+        knowledgeName: '基礎貿易知識',
+        minimumProficiency: 280     // APPRENTICE高級熟練度
       }
     ],
     goldCost: 800,
@@ -435,11 +432,15 @@ export function canChangeToJob(
     strength: number;
     dexterity: number;
     intelligence: number;
-    vitality: number;
-    luck: number;
+    stamina: number;     // 替代vitality
+    // luck為隱藏屬性，不在轉職檢查中
   },
   characterMana: number,
-  learnedKnowledge: string[],
+  learnedKnowledge: Array<{ 
+    skillType: string; 
+    knowledgeName: string; 
+    proficiency: number; 
+  }>,
   gold: number
 ): { canChange: boolean; missingRequirements: string[] } {
   // 只有初心者可以轉職
@@ -476,23 +477,27 @@ export function canChangeToJob(
   if (attrReq.intelligence && characterStats.intelligence < attrReq.intelligence) {
     missingRequirements.push(`智力需要達到 ${attrReq.intelligence}`);
   }
-  if (attrReq.vitality && characterStats.vitality < attrReq.vitality) {
-    missingRequirements.push(`體質需要達到 ${attrReq.vitality}`);
+  if (attrReq.stamina && characterStats.stamina < attrReq.stamina) {
+    missingRequirements.push(`耐力需要達到 ${attrReq.stamina}`);
   }
-  if (attrReq.luck && characterStats.luck < attrReq.luck) {
-    missingRequirements.push(`幸運需要達到 ${attrReq.luck}`);
-  }
+  // 移除luck檢查，因為是隱藏屬性
 
-  // 特殊檢查：法師需要檢查魔力
-  if (targetClass === CharacterClass.MAGE && characterMana < 80) {
-    missingRequirements.push('魔力需要達到 80');
-  }
+  // 移除特殊魔力檢查，統一使用屬性要求
 
-  // 檢查技能知識
+  // 檢查技能知識和熟練度
   if (requirements.skillRequirements) {
     for (const skillReq of requirements.skillRequirements) {
-      if (!learnedKnowledge.includes(skillReq.knowledgeName)) {
+      const knowledge = learnedKnowledge.find(k => 
+        k.skillType === skillReq.skillType && 
+        k.knowledgeName === skillReq.knowledgeName
+      );
+      
+      if (!knowledge) {
         missingRequirements.push(`需要學會「${skillReq.knowledgeName}」`);
+      } else if (knowledge.proficiency < skillReq.minimumProficiency) {
+        missingRequirements.push(
+          `「${skillReq.knowledgeName}」熟練度需要達到 ${skillReq.minimumProficiency} (目前: ${knowledge.proficiency})`
+        );
       }
     }
   }

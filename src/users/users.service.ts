@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class UsersService {
@@ -11,8 +12,13 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     return this.prisma.user.create({
       data: {
+        id: randomUUID(),
+        name: createUserDto.username,
         username: createUserDto.username,
         email: createUserDto.email,
+        emailVerified: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
         // Better Auth 會處理密碼，這裡不需要 passwordHash
       },
       include: {
@@ -108,32 +114,18 @@ export class UsersService {
     });
   }
 
-  async updateLastLogin(id: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id },
-      data: {
-        lastLoginAt: new Date(),
-      },
-    });
-  }
+  // Better Auth 沒有 lastLoginAt, userRole, isActive 等欄位
+  // 這些功能已通過 Better Auth 的 session 和其他機制處理
+  
+  // async updateLastLogin(id: string): Promise<void> {
+  //   // Better Auth 自動處理登入時間
+  // }
 
-  // 遊戲專用方法
-  async updateUserRole(id: string, role: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id },
-      data: {
-        userRole: role,
-      },
-    });
-  }
+  // async updateUserRole(id: string, role: string): Promise<void> {
+  //   // Better Auth 不使用角色系統，角色通過遊戲角色管理
+  // }
 
-  async setActiveStatus(id: string, isActive: boolean): Promise<void> {
-    await this.prisma.user.update({
-      where: { id },
-      data: {
-        isActive: isActive,
-      },
-    });
-  }
-}
+  // async setActiveStatus(id: string, isActive: boolean): Promise<void> {
+  //   // Better Auth 沒有 isActive 欄位，用戶存在即為啟用
+  // }
 }

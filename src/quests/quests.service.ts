@@ -25,7 +25,7 @@ export enum QuestDifficulty {
   EPIC = 'EPIC',
 }
 
-interface QuestReward {
+export interface QuestReward {
   experience: number;
   gold: number;
   items?: Array<{
@@ -44,7 +44,7 @@ interface QuestObjective {
   completed: boolean;
 }
 
-interface QuestData {
+export interface QuestData {
   id: string;
   title: string;
   description: string;

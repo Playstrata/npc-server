@@ -1,17 +1,21 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCharacterDto } from './dto/create-character.dto';
 import { UpdateCharacterDto, AllocateStatsDto } from './dto/update-character.dto';
 import { SkillsService, SkillType } from '../skills/skills.service';
 import { CharacterClass, getClassData, isValidCharacterClass } from './character-classes.types';
 import { MagicalStorageService } from './magical-storage.service';
+import { LuckService, LuckEvent } from './luck.service';
 
 @Injectable()
 export class CharactersService {
+  private readonly logger = new Logger(CharactersService.name);
+
   constructor(
     private prisma: PrismaService,
     @Inject(forwardRef(() => SkillsService)) private skillsService: SkillsService,
-    @Inject(forwardRef(() => MagicalStorageService)) private magicalStorageService: MagicalStorageService
+    @Inject(forwardRef(() => MagicalStorageService)) private magicalStorageService: MagicalStorageService,
+    @Inject(forwardRef(() => LuckService)) private luckService: LuckService
   ) {}
 
   async create(userId: string, createCharacterDto: CreateCharacterDto) {
@@ -53,8 +57,8 @@ export class CharactersService {
         strength: classData.baseStats.strength,
         dexterity: classData.baseStats.dexterity,
         intelligence: classData.baseStats.intelligence,
-        vitality: classData.baseStats.vitality,
-        luck: classData.baseStats.luck,
+        stamina: classData.baseStats.stamina,
+        // luckPercentage 使用預設值 100.0
       },
       include: {
         user: true,
@@ -141,8 +145,8 @@ export class CharactersService {
       (allocateStatsDto.strength || 0) +
       (allocateStatsDto.dexterity || 0) +
       (allocateStatsDto.intelligence || 0) +
-      (allocateStatsDto.vitality || 0) +
-      (allocateStatsDto.luck || 0);
+      (allocateStatsDto.stamina || 0);
+    // luck為隱藏屬性，不能直接分配
 
     if (totalPointsToAllocate > character.availableStatPoints) {
       throw new BadRequestException('Not enough stat points available');
@@ -151,16 +155,16 @@ export class CharactersService {
     const updatedCharacter = await this.prisma.gameCharacter.update({
       where: { id },
       data: {
-        strengthStat: character.strengthStat + (allocateStatsDto.strength || 0),
-        dexterityStat: character.dexterityStat + (allocateStatsDto.dexterity || 0),
-        intelligenceStat: character.intelligenceStat + (allocateStatsDto.intelligence || 0),
-        vitalityStat: character.vitalityStat + (allocateStatsDto.vitality || 0),
-        luckStat: character.luckStat + (allocateStatsDto.luck || 0),
+        strength: character.strength + (allocateStatsDto.strength || 0),
+        dexterity: character.dexterity + (allocateStatsDto.dexterity || 0),
+        intelligence: character.intelligence + (allocateStatsDto.intelligence || 0),
+        baseStamina: character.baseStamina + (allocateStatsDto.stamina || 0),
+        // luckPercentage由LuckService管理，不在此處修改
         availableStatPoints: character.availableStatPoints - totalPointsToAllocate,
-        // 體質影響最大HP
-        maximumHp: allocateStatsDto.vitality 
-          ? character.maximumHp + (allocateStatsDto.vitality * 5)
-          : character.maximumHp,
+        // 耐力影響最大HP和負重能力
+        maxHealth: allocateStatsDto.stamina 
+          ? character.maxHealth + (allocateStatsDto.stamina * 5)
+          : character.maxHealth,
       },
       include: {
         user: true,
@@ -184,21 +188,22 @@ export class CharactersService {
         where: { id },
       });
       
-      let newExp = character.experiencePoints + expGain;
-      let newLevel = character.characterLevel;
+      let newExp = character.experience + expGain;
+      let newLevel = character.level;
       let newStatPoints = character.availableStatPoints;
-      let newMaxHp = character.maximumHp;
-      let newMaxMp = character.maximumMp;
+      let newMaxHp = character.maxHealth;
+      let newMaxMp = character.maxMana;
       
-      // 升級邏輯
-      while (newExp >= character.experienceToNextLevel) {
-        newExp -= character.experienceToNextLevel;
+      // 升級邏輯 - 簡化版本，每100經驗升一級
+      const experiencePerLevel = 100;
+      while (newExp >= experiencePerLevel) {
+        newExp -= experiencePerLevel;
         newLevel += 1;
         newStatPoints += 5; // 每升級獲得5點屬性點
         
         // 升級時增加基礎數值
-        const hpIncrease = 10 + Math.floor(character.vitalityStat * 0.5);
-        const mpIncrease = 5 + Math.floor(character.intelligenceStat * 0.3);
+        const hpIncrease = 10 + Math.floor(character.baseStamina * 0.5);
+        const mpIncrease = 5 + Math.floor(character.intelligence * 0.3);
         
         newMaxHp += hpIncrease;
         newMaxMp += mpIncrease;
@@ -210,17 +215,16 @@ export class CharactersService {
       return prisma.gameCharacter.update({
         where: { id },
         data: {
-          experiencePoints: newExp,
-          characterLevel: newLevel,
+          experience: newExp,
+          level: newLevel,
           availableStatPoints: newStatPoints,
-          maximumHp: newMaxHp,
-          maximumMp: newMaxMp,
-          currentHp: newMaxHp, // 升級時回滿血
-          currentMp: newMaxMp, // 升級時回滿魔
-          experienceToNextLevel: nextLevelExp,
+          maxHealth: newMaxHp,
+          maxMana: newMaxMp,
+          health: newMaxHp, // 升級時回滿血
+          mana: newMaxMp, // 升級時回滿魔
         },
         include: {
-          gameUser: true,
+          user: true,
         },
       });
     });
@@ -232,8 +236,8 @@ export class CharactersService {
     return this.prisma.gameCharacter.update({
       where: { id },
       data: {
-        currentHp: Math.min(character.currentHp + hpAmount, character.maximumHp),
-        currentMp: Math.min(character.currentMp + mpAmount, character.maximumMp),
+        health: Math.min(character.health + hpAmount, character.maxHealth),
+        mana: Math.min(character.mana + mpAmount, character.maxMana),
       },
       include: {
         user: true,
@@ -247,7 +251,7 @@ export class CharactersService {
     return this.prisma.gameCharacter.update({
       where: { id },
       data: {
-        currentHp: Math.max(character.currentHp - damage, 0),
+        health: Math.max(character.health - damage, 0),
       },
       include: {
         user: true,
@@ -265,37 +269,77 @@ export class CharactersService {
   async getCharacterStats(id: string) {
     const character = await this.findOne(id);
     
-    // 計算戰鬥屬性（模擬原本的計算屬性）
-    const physicalAttack = Math.floor(character.strengthStat * 1.5 + character.characterLevel * 2);
-    const magicalAttack = Math.floor(character.intelligenceStat * 1.5 + character.characterLevel * 2);
-    const defense = Math.floor(character.vitalityStat * 1.2 + character.characterLevel * 1.5);
-    const accuracy = Math.floor(character.dexterityStat * 0.8 + character.characterLevel);
-    const evasion = Math.floor(character.dexterityStat * 0.6 + character.luckStat * 0.4);
-    const criticalRate = Math.min(Math.floor(character.luckStat * 0.3 + character.dexterityStat * 0.1), 50);
+    // 獲取職業數據
+    const classData = getClassData(character.characterClass as CharacterClass);
+    
+    // 使用新的戰鬥數值計算系統（包含所有裝備槽位加成）
+    // TODO: 實際裝備數據需要從 items 系統獲取
+    const equipmentBonuses = {
+      physicalAttack: 0,  // 武器 + 手套等可能有攻擊加成
+      magicalAttack: 0,   // 武器 + 手套等可能有魔法攻擊加成
+      physicalDefense: 0, // 所有防具的物理防禦加成總合
+      magicalDefense: 0   // 所有防具的魔法防禦加成總合
+    };
+    
+    // 各裝備槽位加成（需要從資料庫獲取實際裝備數據）:
+    // - 頭部 (helmet): 主要防禦，少量攻擊
+    // - 身體 (chest): 主要防禦
+    // - 上衣 (shirt/套裝): 防禦 + 特殊效果
+    // - 褲/裙 (pants/skirt): 防禦 + 移動加成
+    // - 鞋 (shoes): 防禦 + 移動速度
+    // - 手套 (gloves): 攻擊 + 防禦
+    // - 武器 (weapon): 主要攻擊來源
+    // - 盾牌 (shield): 主要防禦 + 格檔
+    
+    const physicalAttack = Math.floor(
+      (character.strength * 1.5) + 
+      (character.level * classData.growthRates.physicalAttackPerLevel) +
+      equipmentBonuses.physicalAttack  // 所有裝備的物理攻擊加成
+    );
+    const magicalAttack = Math.floor(
+      (character.intelligence * 1.5) + 
+      (character.level * classData.growthRates.magicalAttackPerLevel) +
+      equipmentBonuses.magicalAttack   // 所有裝備的魔法攻擊加成
+    );
+    const physicalDefense = Math.floor(
+      (character.stamina * 1.2) + 
+      (character.level * classData.growthRates.physicalDefensePerLevel) +
+      equipmentBonuses.physicalDefense  // 所有防具的物理防禦加成
+    );
+    const magicalDefense = Math.floor(
+      (character.intelligence * 0.8) + 
+      (character.level * classData.growthRates.magicalDefensePerLevel) +
+      equipmentBonuses.magicalDefense   // 所有防具的魔法防禦加成
+    );
+    
+    // 其他數值計算
+    const accuracy = Math.floor(character.dexterity * 0.8 + character.level);
+    const evasion = Math.floor(character.dexterity * 0.6 + (character.luckPercentage * 0.4));
+    const criticalRate = Math.min(Math.floor((character.luckPercentage - 50) * 0.3 + character.dexterity * 0.1), 50);
     
     return {
       basic: {
-        hp: character.currentHp,
-        maxHp: character.maximumHp,
-        mp: character.currentMp,
-        maxMp: character.maximumMp,
-        level: character.characterLevel,
-        experience: character.experiencePoints,
-        experienceToNextLevel: character.experienceToNextLevel,
+        hp: character.health,
+        maxHp: character.maxHealth,
+        mp: character.mana,
+        maxMp: character.maxMana,
+        level: character.level,
+        experience: character.experience,
         gold: character.goldAmount,
       },
       attributes: {
-        strength: character.strengthStat,
-        dexterity: character.dexterityStat,
-        intelligence: character.intelligenceStat,
-        vitality: character.vitalityStat,
-        luck: character.luckStat,
+        strength: character.strength,
+        dexterity: character.dexterity,
+        intelligence: character.intelligence,
+        stamina: character.stamina,
+        luckPercentage: character.luckPercentage, // 隱藏屬性，通常不顯示給玩家
         availableStatPoints: character.availableStatPoints,
       },
       combat: {
         physicalAttack,
         magicalAttack,
-        defense,
+        physicalDefense,
+        magicalDefense,
         accuracy,
         evasion,
         criticalRate,
@@ -336,8 +380,8 @@ export class CharactersService {
     // 每升一級獲得 5 個屬性點
     const statsPointsGained = levelUp ? levelsDifference * 5 : 0;
     
-    // 計算新的血量和魔力上限（基於體質和智力）
-    const maxHp = 50 + (character.vitality * 10) + (newLevel * 5);
+    // 計算新的血量和魔力上限（基於耐力和智力）
+    const maxHp = 50 + (character.stamina * 10) + (newLevel * 5);
     const maxMp = 20 + (character.intelligence * 8) + (newLevel * 3);
     
     const updatedCharacter = await this.prisma.gameCharacter.update({
@@ -346,12 +390,12 @@ export class CharactersService {
         experience: newExperience,
         level: newLevel,
         availableStatPoints: character.availableStatPoints + statsPointsGained,
-        maximumHp: maxHp,
-        maximumMp: maxMp,
+        maxHealth: maxHp,
+        maxMana: maxMp,
         // 升級時回復血量和魔力
         ...(levelUp && {
-          currentHp: maxHp,
-          currentMp: maxMp,
+          health: maxHp,
+          mana: maxMp,
         }),
       },
       include: {
@@ -373,7 +417,20 @@ export class CharactersService {
       }
     }
 
-    console.log(`[CharactersService] 角色 ${character.name} 獲得 ${experienceGained} 戰鬥經驗${levelUp ? `，升級到 ${newLevel} 級` : ''}`);
+    // 觸發幸運事件
+    try {
+      // 戰鬥勝利增加幸運值
+      await this.luckService.triggerLuckEvent(characterId, LuckEvent.COMBAT_VICTORY, `擊敗${monsterName || '怪物'}`);
+      
+      // 如果升級，額外增加幸運值
+      if (levelUp) {
+        await this.luckService.triggerLuckEvent(characterId, LuckEvent.LEVEL_UP, `升級到${newLevel}級`);
+      }
+    } catch (error) {
+      this.logger.warn('[CharactersService] 觸發幸運事件失敗:', error);
+    }
+
+    this.logger.log(`[CharactersService] 角色 ${character.characterName} 獲得 ${experienceGained} 戰鬥經驗${levelUp ? `，升級到 ${newLevel} 級` : ''}`);
 
     return {
       character: updatedCharacter,

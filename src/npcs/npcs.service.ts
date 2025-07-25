@@ -37,7 +37,7 @@ export enum FriendshipLevel {
   HERO = 'HERO',                      // 英雄 (100+)
 }
 
-interface FriendshipInfo {
+export interface FriendshipInfo {
   level: FriendshipLevel;
   score: number;
   personalReputation: number;
@@ -47,7 +47,7 @@ interface FriendshipInfo {
   title: string;                      // 稱謂
 }
 
-interface NPCDialogue {
+export interface NPCDialogue {
   id: string;
   condition?: string;
   text: string;
@@ -59,7 +59,7 @@ interface NPCDialogue {
   }>;
 }
 
-interface NPCData {
+export interface NPCData {
   id: string;
   name: string;
   type: NPCType;
@@ -736,7 +736,7 @@ export class NpcsService {
 
     const relationship = npc.relationships[playerId];
     const reputation = relationship ? relationship.reputation : 0;
-    const friendshipInfo = this.calculateFriendshipInfo(reputation, npc, playerId);
+    const friendshipInfo = await this.calculateFriendshipInfo(npcId, playerId);
     
     // 獲取 NPC 的性格和情緒數據
     const personality = this.getNPCPersonality(npcId);

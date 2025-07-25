@@ -65,4 +65,11 @@ export class AllocateStatsDto {
   @Min(0)
   @Max(50)
   luck?: number;
+
+  @ApiProperty({ description: '耐力點數分配', required: false })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(50)
+  stamina?: number;
 }

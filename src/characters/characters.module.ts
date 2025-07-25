@@ -5,6 +5,7 @@ import { MagicalStorageService } from './magical-storage.service';
 import { MagicalStorageController } from './magical-storage.controller';
 import { JobChangeService } from './job-change.service';
 import { JobChangeController } from './job-change.controller';
+import { LuckService } from './luck.service';
 import { ItemsModule } from '../items/items.module';
 import { SkillsModule } from '../skills/skills.module';
 
@@ -14,7 +15,7 @@ import { SkillsModule } from '../skills/skills.module';
     forwardRef(() => SkillsModule)
   ],
   controllers: [CharactersController, MagicalStorageController, JobChangeController],
-  providers: [CharactersService, MagicalStorageService, JobChangeService],
-  exports: [CharactersService, MagicalStorageService, JobChangeService],
+  providers: [CharactersService, MagicalStorageService, JobChangeService, LuckService],
+  exports: [CharactersService, MagicalStorageService, JobChangeService, LuckService],
 })
 export class CharactersModule {}

@@ -13,7 +13,7 @@ import {
   ApiBearerAuth, 
   ApiParam 
 } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthGuard, Session } from '@thallesp/nestjs-better-auth';
 import { JobChangeService } from './job-change.service';
 import { CharacterClass } from './character-classes.types';
 
@@ -24,7 +24,7 @@ interface JobChangeRequestDto {
 }
 
 @Controller('job-change')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard)
 @ApiTags('job-change')
 @ApiBearerAuth()
 export class JobChangeController {

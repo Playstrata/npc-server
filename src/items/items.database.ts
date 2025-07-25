@@ -488,7 +488,7 @@ export const BACKPACKS: Record<string, BaseItem> = {
     requirements: {
       level: 15,
       strength: 18,
-      vitality: 15
+      stamina: 15
     },
     craftingInfo: {
       recipe: [
@@ -534,7 +534,7 @@ export const BACKPACKS: Record<string, BaseItem> = {
     requirements: {
       level: 25,
       strength: 22,
-      vitality: 18
+      stamina: 18
     },
     craftingInfo: {
       recipe: [
