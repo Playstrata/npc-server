@@ -1,5 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class BetterAuthGuard implements CanActivate {
@@ -7,12 +12,12 @@ export class BetterAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    
+
     // 從 cookies 或 Authorization header 獲取 token
     const token = this.extractToken(request);
-    
+
     if (!token) {
-      throw new UnauthorizedException('No authentication token provided');
+      throw new UnauthorizedException("No authentication token provided");
     }
 
     try {
@@ -29,7 +34,7 @@ export class BetterAuthGuard implements CanActivate {
       });
 
       if (!session) {
-        throw new UnauthorizedException('Invalid session token');
+        throw new UnauthorizedException("Invalid session token");
       }
 
       // 檢查 session 是否過期
@@ -38,7 +43,7 @@ export class BetterAuthGuard implements CanActivate {
         await this.prisma.session.delete({
           where: { id: session.id },
         });
-        throw new UnauthorizedException('Session expired');
+        throw new UnauthorizedException("Session expired");
       }
 
       // Better Auth 沒有 isActive 欄位，所有驗證過的用戶都被認為是啟用的
@@ -52,14 +57,14 @@ export class BetterAuthGuard implements CanActivate {
       if (error instanceof UnauthorizedException) {
         throw error;
       }
-      throw new UnauthorizedException('Authentication failed');
+      throw new UnauthorizedException("Authentication failed");
     }
   }
 
   private extractToken(request: any): string | null {
     // 1. 從 Authorization header 提取
     const authHeader = request.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+    if (authHeader && authHeader.startsWith("Bearer ")) {
       return authHeader.substring(7);
     }
 

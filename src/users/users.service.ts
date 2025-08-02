@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { randomUUID } from 'crypto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { randomUUID } from "crypto";
 
 @Injectable()
 export class UsersService {
@@ -86,7 +86,7 @@ export class UsersService {
     await this.findOne(id); // 確保用戶存在
 
     const updateData: any = {};
-    
+
     if (updateUserDto.username) {
       updateData.username = updateUserDto.username;
     }
@@ -116,7 +116,7 @@ export class UsersService {
 
   // Better Auth 沒有 lastLoginAt, userRole, isActive 等欄位
   // 這些功能已通過 Better Auth 的 session 和其他機制處理
-  
+
   // async updateLastLogin(id: string): Promise<void> {
   //   // Better Auth 自動處理登入時間
   // }

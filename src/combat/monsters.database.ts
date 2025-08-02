@@ -1,17 +1,13 @@
-import { 
-  MonsterDefinition, 
-  MonsterType, 
-  MonsterTier 
-} from './monsters.types';
+import { MonsterDefinition, MonsterType, MonsterTier } from "./monsters.types";
 
 // 怪物資料庫
 export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
   // ========== 初級怪物 (1-5級) ==========
-  
-  'forest-slime': {
-    id: 'forest-slime',
-    name: '森林史萊姆',
-    description: '棲息在翠綠森林中的綠色史萊姆，性格溫和但會保護自己的領域',
+
+  "forest-slime": {
+    id: "forest-slime",
+    name: "森林史萊姆",
+    description: "棲息在翠綠森林中的綠色史萊姆，性格溫和但會保護自己的領域",
     type: MonsterType.BEAST,
     tier: MonsterTier.WEAK,
     stats: {
@@ -28,7 +24,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       criticalRate: 0.02,
       criticalDamage: 1.2,
       accuracy: 0.85,
-      evasion: 0.1
+      evasion: 0.1,
     },
     behavior: {
       aggroRange: 5.0,
@@ -38,7 +34,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       fleeThreshold: 0.15,
       isAggressive: false,
       canUseMagic: false,
-      specialAbilities: ['ACID_SPIT']
+      specialAbilities: ["ACID_SPIT"],
     },
     resistances: {
       physicalResistance: 0.1,
@@ -47,7 +43,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       waterResistance: 0.5,
       earthResistance: 0.2,
       airResistance: 0.0,
-      criticalResistance: 0.1
+      criticalResistance: 0.1,
     },
     rewards: {
       baseExperience: 25,
@@ -56,40 +52,40 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       goldReward: { min: 3, max: 8 },
       drops: [
         {
-          itemId: 'slime-gel',
+          itemId: "slime-gel",
           dropRate: 0.7,
           minQuantity: 1,
           maxQuantity: 2,
-          quality: 'COMMON',
-          isGuaranteed: false
+          quality: "COMMON",
+          isGuaranteed: false,
         },
         {
-          itemId: 'small-health-potion',
+          itemId: "small-health-potion",
           dropRate: 0.15,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'COMMON',
-          isGuaranteed: false
-        }
-      ]
+          quality: "COMMON",
+          isGuaranteed: false,
+        },
+      ],
     },
-    spawnLocations: ['forest-clearing', 'forest-path', 'mushroom-grove'],
+    spawnLocations: ["forest-clearing", "forest-path", "mushroom-grove"],
     spawnConditions: {
-      timeOfDay: 'ANY',
-      playerLevelRange: { min: 1, max: 8 }
+      timeOfDay: "ANY",
+      playerLevelRange: { min: 1, max: 8 },
     },
     visualInfo: {
-      spriteId: 'slime-green',
-      size: 'SMALL',
-      colorVariant: 'green',
-      animationSet: 'slime-basic'
-    }
+      spriteId: "slime-green",
+      size: "SMALL",
+      colorVariant: "green",
+      animationSet: "slime-basic",
+    },
   },
 
-  'wild-rabbit': {
-    id: 'wild-rabbit',
-    name: '野生兔子',
-    description: '機靈的森林兔子，雖然看起來無害但被逼急了也會反擊',
+  "wild-rabbit": {
+    id: "wild-rabbit",
+    name: "野生兔子",
+    description: "機靈的森林兔子，雖然看起來無害但被逼急了也會反擊",
     type: MonsterType.BEAST,
     tier: MonsterTier.WEAK,
     stats: {
@@ -106,7 +102,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       criticalRate: 0.1,
       criticalDamage: 1.3,
       accuracy: 0.9,
-      evasion: 0.25
+      evasion: 0.25,
     },
     behavior: {
       aggroRange: 3.0,
@@ -116,7 +112,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       fleeThreshold: 0.5,
       isAggressive: false,
       canUseMagic: false,
-      specialAbilities: ['QUICK_ESCAPE']
+      specialAbilities: ["QUICK_ESCAPE"],
     },
     resistances: {
       physicalResistance: -0.1,
@@ -125,7 +121,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       waterResistance: 0.0,
       earthResistance: 0.1,
       airResistance: 0.2,
-      criticalResistance: -0.1
+      criticalResistance: -0.1,
     },
     rewards: {
       baseExperience: 15,
@@ -134,42 +130,42 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       goldReward: { min: 1, max: 4 },
       drops: [
         {
-          itemId: 'rabbit-fur',
+          itemId: "rabbit-fur",
           dropRate: 0.8,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'COMMON',
-          isGuaranteed: false
+          quality: "COMMON",
+          isGuaranteed: false,
         },
         {
-          itemId: 'rabbit-meat',
+          itemId: "rabbit-meat",
           dropRate: 0.6,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'COMMON',
-          isGuaranteed: false
-        }
-      ]
+          quality: "COMMON",
+          isGuaranteed: false,
+        },
+      ],
     },
-    spawnLocations: ['forest-meadow', 'village-outskirts', 'grass-plains'],
+    spawnLocations: ["forest-meadow", "village-outskirts", "grass-plains"],
     spawnConditions: {
-      timeOfDay: 'DAY',
-      playerLevelRange: { min: 1, max: 5 }
+      timeOfDay: "DAY",
+      playerLevelRange: { min: 1, max: 5 },
     },
     visualInfo: {
-      spriteId: 'rabbit-brown',
-      size: 'SMALL',
-      colorVariant: 'brown',
-      animationSet: 'rabbit-basic'
-    }
+      spriteId: "rabbit-brown",
+      size: "SMALL",
+      colorVariant: "brown",
+      animationSet: "rabbit-basic",
+    },
   },
 
   // ========== 中級怪物 (6-15級) ==========
 
-  'gray-wolf': {
-    id: 'gray-wolf',
-    name: '灰狼',
-    description: '森林中的掠食者，群居動物，單獨遇到時相對安全',
+  "gray-wolf": {
+    id: "gray-wolf",
+    name: "灰狼",
+    description: "森林中的掠食者，群居動物，單獨遇到時相對安全",
     type: MonsterType.BEAST,
     tier: MonsterTier.NORMAL,
     stats: {
@@ -186,7 +182,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       criticalRate: 0.15,
       criticalDamage: 1.5,
       accuracy: 0.88,
-      evasion: 0.18
+      evasion: 0.18,
     },
     behavior: {
       aggroRange: 8.0,
@@ -196,7 +192,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       fleeThreshold: 0.2,
       isAggressive: true,
       canUseMagic: false,
-      specialAbilities: ['PACK_HOWL', 'BITE_COMBO']
+      specialAbilities: ["PACK_HOWL", "BITE_COMBO"],
     },
     resistances: {
       physicalResistance: 0.0,
@@ -205,7 +201,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       waterResistance: 0.1,
       earthResistance: 0.0,
       airResistance: 0.0,
-      criticalResistance: 0.0
+      criticalResistance: 0.0,
     },
     rewards: {
       baseExperience: 85,
@@ -214,48 +210,48 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       goldReward: { min: 12, max: 20 },
       drops: [
         {
-          itemId: 'wolf-pelt',
+          itemId: "wolf-pelt",
           dropRate: 0.75,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'COMMON',
-          isGuaranteed: false
+          quality: "COMMON",
+          isGuaranteed: false,
         },
         {
-          itemId: 'wolf-fang',
+          itemId: "wolf-fang",
           dropRate: 0.35,
           minQuantity: 1,
           maxQuantity: 2,
-          quality: 'UNCOMMON',
-          isGuaranteed: false
+          quality: "UNCOMMON",
+          isGuaranteed: false,
         },
         {
-          itemId: 'medium-health-potion',
+          itemId: "medium-health-potion",
           dropRate: 0.2,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'COMMON',
-          isGuaranteed: false
-        }
-      ]
+          quality: "COMMON",
+          isGuaranteed: false,
+        },
+      ],
     },
-    spawnLocations: ['deep-forest', 'mountain-path', 'forest-cave'],
+    spawnLocations: ["deep-forest", "mountain-path", "forest-cave"],
     spawnConditions: {
-      timeOfDay: 'ANY',
-      playerLevelRange: { min: 5, max: 15 }
+      timeOfDay: "ANY",
+      playerLevelRange: { min: 5, max: 15 },
     },
     visualInfo: {
-      spriteId: 'wolf-gray',
-      size: 'MEDIUM',
-      colorVariant: 'gray',
-      animationSet: 'wolf-basic'
-    }
+      spriteId: "wolf-gray",
+      size: "MEDIUM",
+      colorVariant: "gray",
+      animationSet: "wolf-basic",
+    },
   },
 
-  'forest-goblin': {
-    id: 'forest-goblin',
-    name: '森林哥布林',
-    description: '狡猾的綠皮小怪，會使用簡單的武器和陷阱',
+  "forest-goblin": {
+    id: "forest-goblin",
+    name: "森林哥布林",
+    description: "狡猾的綠皮小怪，會使用簡單的武器和陷阱",
     type: MonsterType.HUMANOID,
     tier: MonsterTier.NORMAL,
     stats: {
@@ -272,7 +268,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       criticalRate: 0.12,
       criticalDamage: 1.4,
       accuracy: 0.85,
-      evasion: 0.22
+      evasion: 0.22,
     },
     behavior: {
       aggroRange: 6.0,
@@ -282,7 +278,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       fleeThreshold: 0.25,
       isAggressive: true,
       canUseMagic: true,
-      specialAbilities: ['THROWING_DAGGER', 'CRUDE_MAGIC', 'DIRTY_FIGHT']
+      specialAbilities: ["THROWING_DAGGER", "CRUDE_MAGIC", "DIRTY_FIGHT"],
     },
     resistances: {
       physicalResistance: 0.05,
@@ -291,7 +287,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       waterResistance: 0.0,
       earthResistance: 0.1,
       airResistance: 0.0,
-      criticalResistance: -0.05
+      criticalResistance: -0.05,
     },
     rewards: {
       baseExperience: 110,
@@ -300,50 +296,50 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       goldReward: { min: 15, max: 28 },
       drops: [
         {
-          itemId: 'goblin-ear',
+          itemId: "goblin-ear",
           dropRate: 0.9,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'COMMON',
-          isGuaranteed: true
+          quality: "COMMON",
+          isGuaranteed: true,
         },
         {
-          itemId: 'crude-dagger',
+          itemId: "crude-dagger",
           dropRate: 0.4,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'COMMON',
-          isGuaranteed: false
+          quality: "COMMON",
+          isGuaranteed: false,
         },
         {
-          itemId: 'small-mana-potion',
+          itemId: "small-mana-potion",
           dropRate: 0.25,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'COMMON',
-          isGuaranteed: false
-        }
-      ]
+          quality: "COMMON",
+          isGuaranteed: false,
+        },
+      ],
     },
-    spawnLocations: ['goblin-camp', 'forest-ruins', 'abandoned-mine'],
+    spawnLocations: ["goblin-camp", "forest-ruins", "abandoned-mine"],
     spawnConditions: {
-      timeOfDay: 'ANY',
-      playerLevelRange: { min: 7, max: 18 }
+      timeOfDay: "ANY",
+      playerLevelRange: { min: 7, max: 18 },
     },
     visualInfo: {
-      spriteId: 'goblin-forest',
-      size: 'SMALL',
-      colorVariant: 'green',
-      animationSet: 'goblin-basic'
-    }
+      spriteId: "goblin-forest",
+      size: "SMALL",
+      colorVariant: "green",
+      animationSet: "goblin-basic",
+    },
   },
 
   // ========== 高級怪物 (16-25級) ==========
 
-  'iron-golem': {
-    id: 'iron-golem',
-    name: '鐵魔像',
-    description: '古代遺跡的守護者，由魔法驅動的鐵製構造體',
+  "iron-golem": {
+    id: "iron-golem",
+    name: "鐵魔像",
+    description: "古代遺跡的守護者，由魔法驅動的鐵製構造體",
     type: MonsterType.ELEMENTAL,
     tier: MonsterTier.STRONG,
     stats: {
@@ -360,7 +356,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       criticalRate: 0.05,
       criticalDamage: 2.0,
       accuracy: 0.75,
-      evasion: 0.05
+      evasion: 0.05,
     },
     behavior: {
       aggroRange: 10.0,
@@ -370,7 +366,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       fleeThreshold: 0.0,
       isAggressive: true,
       canUseMagic: true,
-      specialAbilities: ['IRON_FIST', 'MAGIC_BARRIER', 'REPAIR_SELF']
+      specialAbilities: ["IRON_FIST", "MAGIC_BARRIER", "REPAIR_SELF"],
     },
     resistances: {
       physicalResistance: 0.4,
@@ -379,7 +375,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       waterResistance: -0.2,
       earthResistance: 0.5,
       airResistance: 0.1,
-      criticalResistance: 0.3
+      criticalResistance: 0.3,
     },
     rewards: {
       baseExperience: 280,
@@ -388,54 +384,54 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       goldReward: { min: 45, max: 75 },
       drops: [
         {
-          itemId: 'iron-ingot',
+          itemId: "iron-ingot",
           dropRate: 0.8,
           minQuantity: 2,
           maxQuantity: 4,
-          quality: 'UNCOMMON',
-          isGuaranteed: false
+          quality: "UNCOMMON",
+          isGuaranteed: false,
         },
         {
-          itemId: 'magic-crystal',
+          itemId: "magic-crystal",
           dropRate: 0.3,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'RARE',
-          isGuaranteed: false
+          quality: "RARE",
+          isGuaranteed: false,
         },
         {
-          itemId: 'golem-core',
+          itemId: "golem-core",
           dropRate: 0.1,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'RARE',
-          isGuaranteed: false
-        }
+          quality: "RARE",
+          isGuaranteed: false,
+        },
       ],
       specialRewards: {
         reputationGain: 5,
-        luckBonus: 0.5
-      }
+        luckBonus: 0.5,
+      },
     },
-    spawnLocations: ['ancient-ruins', 'magic-laboratory', 'crystal-cave'],
+    spawnLocations: ["ancient-ruins", "magic-laboratory", "crystal-cave"],
     spawnConditions: {
-      timeOfDay: 'ANY',
-      playerLevelRange: { min: 15, max: 30 }
+      timeOfDay: "ANY",
+      playerLevelRange: { min: 15, max: 30 },
     },
     visualInfo: {
-      spriteId: 'golem-iron',
-      size: 'LARGE',
-      colorVariant: 'metallic',
-      animationSet: 'golem-heavy'
-    }
+      spriteId: "golem-iron",
+      size: "LARGE",
+      colorVariant: "metallic",
+      animationSet: "golem-heavy",
+    },
   },
 
   // ========== 精英怪物 (26-35級) ==========
 
-  'shadow-assassin': {
-    id: 'shadow-assassin',
-    name: '暗影刺客',
-    description: '來自暗影位面的刺客，擅長潛行和致命一擊',
+  "shadow-assassin": {
+    id: "shadow-assassin",
+    name: "暗影刺客",
+    description: "來自暗影位面的刺客，擅長潛行和致命一擊",
     type: MonsterType.HUMANOID,
     tier: MonsterTier.ELITE,
     stats: {
@@ -452,7 +448,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       criticalRate: 0.35,
       criticalDamage: 2.5,
       accuracy: 0.92,
-      evasion: 0.4
+      evasion: 0.4,
     },
     behavior: {
       aggroRange: 12.0,
@@ -462,7 +458,12 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       fleeThreshold: 0.15,
       isAggressive: true,
       canUseMagic: true,
-      specialAbilities: ['SHADOW_STEP', 'BACKSTAB', 'POISON_BLADE', 'INVISIBILITY']
+      specialAbilities: [
+        "SHADOW_STEP",
+        "BACKSTAB",
+        "POISON_BLADE",
+        "INVISIBILITY",
+      ],
     },
     resistances: {
       physicalResistance: 0.1,
@@ -471,7 +472,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       waterResistance: 0.0,
       earthResistance: 0.0,
       airResistance: 0.2,
-      criticalResistance: 0.0
+      criticalResistance: 0.0,
     },
     rewards: {
       baseExperience: 450,
@@ -480,55 +481,55 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       goldReward: { min: 80, max: 125 },
       drops: [
         {
-          itemId: 'shadow-essence',
+          itemId: "shadow-essence",
           dropRate: 0.7,
           minQuantity: 1,
           maxQuantity: 2,
-          quality: 'RARE',
-          isGuaranteed: false
+          quality: "RARE",
+          isGuaranteed: false,
         },
         {
-          itemId: 'assassin-blade',
+          itemId: "assassin-blade",
           dropRate: 0.25,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'RARE',
-          isGuaranteed: false
+          quality: "RARE",
+          isGuaranteed: false,
         },
         {
-          itemId: 'stealth-cloak',
+          itemId: "stealth-cloak",
           dropRate: 0.15,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'EPIC',
-          isGuaranteed: false
-        }
+          quality: "EPIC",
+          isGuaranteed: false,
+        },
       ],
       specialRewards: {
         reputationGain: 10,
         luckBonus: 1.0,
-        skillBooks: ['advanced-stealth']
-      }
+        skillBooks: ["advanced-stealth"],
+      },
     },
-    spawnLocations: ['shadow-realm', 'dark-alley', 'assassin-hideout'],
+    spawnLocations: ["shadow-realm", "dark-alley", "assassin-hideout"],
     spawnConditions: {
-      timeOfDay: 'NIGHT',
-      playerLevelRange: { min: 22, max: 40 }
+      timeOfDay: "NIGHT",
+      playerLevelRange: { min: 22, max: 40 },
     },
     visualInfo: {
-      spriteId: 'assassin-shadow',
-      size: 'MEDIUM',
-      colorVariant: 'black',
-      animationSet: 'assassin-stealth'
-    }
+      spriteId: "assassin-shadow",
+      size: "MEDIUM",
+      colorVariant: "black",
+      animationSet: "assassin-stealth",
+    },
   },
 
   // ========== 首領怪物 (36-50級) ==========
 
-  'ancient-dragon': {
-    id: 'ancient-dragon',
-    name: '遠古巨龍',
-    description: '傳說中的遠古巨龍，擁有毀天滅地的力量',
+  "ancient-dragon": {
+    id: "ancient-dragon",
+    name: "遠古巨龍",
+    description: "傳說中的遠古巨龍，擁有毀天滅地的力量",
     type: MonsterType.DRAGON,
     tier: MonsterTier.BOSS,
     stats: {
@@ -545,7 +546,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       criticalRate: 0.25,
       criticalDamage: 3.0,
       accuracy: 0.85,
-      evasion: 0.15
+      evasion: 0.15,
     },
     behavior: {
       aggroRange: 25.0,
@@ -556,13 +557,13 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       isAggressive: true,
       canUseMagic: true,
       specialAbilities: [
-        'DRAGON_BREATH',
-        'TAIL_SWEEP',
-        'WING_STORM',
-        'ANCIENT_MAGIC',
-        'DRAGON_RAGE',
-        'SCALE_ARMOR'
-      ]
+        "DRAGON_BREATH",
+        "TAIL_SWEEP",
+        "WING_STORM",
+        "ANCIENT_MAGIC",
+        "DRAGON_RAGE",
+        "SCALE_ARMOR",
+      ],
     },
     resistances: {
       physicalResistance: 0.5,
@@ -571,7 +572,7 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       waterResistance: 0.2,
       earthResistance: 0.3,
       airResistance: 0.6,
-      criticalResistance: 0.4
+      criticalResistance: 0.4,
     },
     rewards: {
       baseExperience: 2500,
@@ -580,87 +581,89 @@ export const MONSTERS_DATABASE: Record<string, MonsterDefinition> = {
       goldReward: { min: 500, max: 800 },
       drops: [
         {
-          itemId: 'dragon-scale',
+          itemId: "dragon-scale",
           dropRate: 1.0,
           minQuantity: 5,
           maxQuantity: 10,
-          quality: 'LEGENDARY',
-          isGuaranteed: true
+          quality: "LEGENDARY",
+          isGuaranteed: true,
         },
         {
-          itemId: 'dragon-heart',
+          itemId: "dragon-heart",
           dropRate: 0.8,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'LEGENDARY',
-          isGuaranteed: false
+          quality: "LEGENDARY",
+          isGuaranteed: false,
         },
         {
-          itemId: 'ancient-weapon',
+          itemId: "ancient-weapon",
           dropRate: 0.3,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'LEGENDARY',
-          isGuaranteed: false
+          quality: "LEGENDARY",
+          isGuaranteed: false,
         },
         {
-          itemId: 'dragon-treasure-chest',
+          itemId: "dragon-treasure-chest",
           dropRate: 1.0,
           minQuantity: 1,
           maxQuantity: 1,
-          quality: 'LEGENDARY',
-          isGuaranteed: true
-        }
+          quality: "LEGENDARY",
+          isGuaranteed: true,
+        },
       ],
       specialRewards: {
         reputationGain: 50,
         luckBonus: 5.0,
-        skillBooks: ['dragon-slayer', 'ancient-magic']
-      }
+        skillBooks: ["dragon-slayer", "ancient-magic"],
+      },
     },
-    spawnLocations: ['dragon-lair', 'ancient-mountain'],
+    spawnLocations: ["dragon-lair", "ancient-mountain"],
     spawnConditions: {
-      timeOfDay: 'ANY',
+      timeOfDay: "ANY",
       playerLevelRange: { min: 35, max: 60 },
-      specialEvents: ['dragon-awakening']
+      specialEvents: ["dragon-awakening"],
     },
     visualInfo: {
-      spriteId: 'dragon-ancient',
-      size: 'GIANT',
-      colorVariant: 'gold',
-      animationSet: 'dragon-legendary'
-    }
-  }
+      spriteId: "dragon-ancient",
+      size: "GIANT",
+      colorVariant: "gold",
+      animationSet: "dragon-legendary",
+    },
+  },
 };
 
 // 輔助函數：根據等級獲取適合的怪物
 export function getMonstersForLevel(playerLevel: number): MonsterDefinition[] {
-  return Object.values(MONSTERS_DATABASE).filter(monster => {
+  return Object.values(MONSTERS_DATABASE).filter((monster) => {
     const conditions = monster.spawnConditions;
     if (!conditions?.playerLevelRange) return true;
-    
-    return playerLevel >= conditions.playerLevelRange.min && 
-           playerLevel <= conditions.playerLevelRange.max;
+
+    return (
+      playerLevel >= conditions.playerLevelRange.min &&
+      playerLevel <= conditions.playerLevelRange.max
+    );
   });
 }
 
 // 輔助函數：根據地點獲取怪物
 export function getMonstersForLocation(location: string): MonsterDefinition[] {
-  return Object.values(MONSTERS_DATABASE).filter(monster => 
-    monster.spawnLocations.includes(location)
+  return Object.values(MONSTERS_DATABASE).filter((monster) =>
+    monster.spawnLocations.includes(location),
   );
 }
 
 // 輔助函數：根據類型獲取怪物
 export function getMonstersByType(type: MonsterType): MonsterDefinition[] {
-  return Object.values(MONSTERS_DATABASE).filter(monster => 
-    monster.type === type
+  return Object.values(MONSTERS_DATABASE).filter(
+    (monster) => monster.type === type,
   );
 }
 
 // 輔助函數：獲取指定等級區間的怪物
 export function getMonstersByTier(tier: MonsterTier): MonsterDefinition[] {
-  return Object.values(MONSTERS_DATABASE).filter(monster => 
-    monster.tier === tier
+  return Object.values(MONSTERS_DATABASE).filter(
+    (monster) => monster.tier === tier,
   );
 }

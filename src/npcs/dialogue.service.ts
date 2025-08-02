@@ -1,54 +1,61 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { NPCType, NPCProfession, FriendshipLevel } from './npcs.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { NPCType, NPCProfession, FriendshipLevel } from "./npcs.service";
 
 // NPC 性格特徵
 export interface NPCPersonality {
   traits: {
-    friendliness: number;    // 友善度 (1-10)
-    curiosity: number;       // 好奇心 (1-10)
-    helpfulness: number;     // 樂於助人 (1-10)
-    chattiness: number;      // 健談程度 (1-10)
-    greediness: number;      // 貪婪程度 (1-10)
-    trustfulness: number;    // 信任度 (1-10)
-    pride: number;           // 自豪感 (1-10)
-    patience: number;        // 耐心程度 (1-10)
+    friendliness: number; // 友善度 (1-10)
+    curiosity: number; // 好奇心 (1-10)
+    helpfulness: number; // 樂於助人 (1-10)
+    chattiness: number; // 健談程度 (1-10)
+    greediness: number; // 貪婪程度 (1-10)
+    trustfulness: number; // 信任度 (1-10)
+    pride: number; // 自豪感 (1-10)
+    patience: number; // 耐心程度 (1-10)
   };
-  quirks: string[];          // 個人習慣/特色
-  fears: string[];           // 恐懼/顧忌
-  interests: string[];       // 興趣愛好
+  quirks: string[]; // 個人習慣/特色
+  fears: string[]; // 恐懼/顧忌
+  interests: string[]; // 興趣愛好
   speechPatterns: {
-    formality: 'casual' | 'formal' | 'rustic';  // 說話方式
-    accent: string;          // 口音/方言
-    catchphrases: string[];  // 口頭禪
-    vocabulary: 'simple' | 'complex' | 'professional'; // 詞彙複雜度
+    formality: "casual" | "formal" | "rustic"; // 說話方式
+    accent: string; // 口音/方言
+    catchphrases: string[]; // 口頭禪
+    vocabulary: "simple" | "complex" | "professional"; // 詞彙複雜度
   };
 }
 
 // NPC 當前狀態
 export interface NPCMood {
-  currentMood: 'happy' | 'neutral' | 'sad' | 'angry' | 'excited' | 'worried' | 'tired';
-  energy: number;          // 精力值 (0-100)
-  stress: number;          // 壓力值 (0-100)
-  satisfaction: number;    // 工作滿意度 (0-100)
+  currentMood:
+    | "happy"
+    | "neutral"
+    | "sad"
+    | "angry"
+    | "excited"
+    | "worried"
+    | "tired";
+  energy: number; // 精力值 (0-100)
+  stress: number; // 壓力值 (0-100)
+  satisfaction: number; // 工作滿意度 (0-100)
   recentEvents: Array<{
-    type: 'success' | 'failure' | 'interaction' | 'discovery';
+    type: "success" | "failure" | "interaction" | "discovery";
     description: string;
-    impact: number;        // 對情緒的影響 (-5 to +5)
+    impact: number; // 對情緒的影響 (-5 to +5)
     timestamp: Date;
   }>;
 }
 
 // 對話上下文
 export interface DialogueContext {
-  timeOfDay: 'dawn' | 'morning' | 'noon' | 'afternoon' | 'evening' | 'night';
-  weather: 'sunny' | 'cloudy' | 'rainy' | 'stormy' | 'snowy';
-  season: 'spring' | 'summer' | 'autumn' | 'winter';
+  timeOfDay: "dawn" | "morning" | "noon" | "afternoon" | "evening" | "night";
+  weather: "sunny" | "cloudy" | "rainy" | "stormy" | "snowy";
+  season: "spring" | "summer" | "autumn" | "winter";
   location: string;
   playerLevel: number;
   friendshipLevel: FriendshipLevel;
   friendshipScore: number;
-  recentPlayerActions: string[];  // 玩家最近的行為
-  npcWorkStatus: 'working' | 'resting' | 'busy' | 'free';
+  recentPlayerActions: string[]; // 玩家最近的行為
+  npcWorkStatus: "working" | "resting" | "busy" | "free";
   hasQuests: boolean;
   hasShop: boolean;
   canTeach: boolean;
@@ -61,12 +68,12 @@ export interface GeneratedDialogue {
   availableResponses: Array<{
     id: string;
     text: string;
-    type: 'friendly' | 'business' | 'quest' | 'learning' | 'goodbye';
+    type: "friendly" | "business" | "quest" | "learning" | "goodbye";
     requiresFriendship?: FriendshipLevel;
     action?: string;
   }>;
   mood: string;
-  personalityShown: string[];  // 展現出的性格特徵
+  personalityShown: string[]; // 展現出的性格特徵
 }
 
 @Injectable()
@@ -82,30 +89,39 @@ export class DialogueService {
     npcProfession: NPCProfession,
     personality: NPCPersonality,
     currentMood: NPCMood,
-    context: DialogueContext
+    context: DialogueContext,
   ): GeneratedDialogue {
     // 生成問候語
     const greeting = this.generateGreeting(personality, currentMood, context);
-    
+
     // 生成主要對話內容
     const mainContent = this.generateMainContent(
-      npcType, npcProfession, personality, currentMood, context
+      npcType,
+      npcProfession,
+      personality,
+      currentMood,
+      context,
     );
-    
+
     // 生成可用回應選項
     const availableResponses = this.generateResponseOptions(
-      npcType, personality, context
+      npcType,
+      personality,
+      context,
     );
 
     // 分析展現的性格特徵
-    const personalityShown = this.analyzePersonalityShown(personality, currentMood);
+    const personalityShown = this.analyzePersonalityShown(
+      personality,
+      currentMood,
+    );
 
     return {
       greeting,
       mainContent,
       availableResponses,
       mood: currentMood.currentMood,
-      personalityShown
+      personalityShown,
     };
   }
 
@@ -115,11 +131,11 @@ export class DialogueService {
   private generateGreeting(
     personality: NPCPersonality,
     currentMood: NPCMood,
-    context: DialogueContext
+    context: DialogueContext,
   ): string {
     const greetings: string[] = [];
     const timeGreeting = this.getTimeGreeting(context.timeOfDay);
-    
+
     // 基於友善度調整問候語
     if (personality.traits.friendliness >= 8) {
       greetings.push(`${timeGreeting}！很高興見到你`);
@@ -133,11 +149,14 @@ export class DialogueService {
     }
 
     // 基於情緒調整
-    if (currentMood.currentMood === 'happy' || currentMood.currentMood === 'excited') {
+    if (
+      currentMood.currentMood === "happy" ||
+      currentMood.currentMood === "excited"
+    ) {
       greetings.push(`${timeGreeting}！今天真是美好的一天！`);
-    } else if (currentMood.currentMood === 'tired') {
+    } else if (currentMood.currentMood === "tired") {
       greetings.push(`${timeGreeting}...有點累了`);
-    } else if (currentMood.currentMood === 'angry') {
+    } else if (currentMood.currentMood === "angry") {
       greetings.push(`${timeGreeting}。希望你不是來添麻煩的`);
     }
 
@@ -159,13 +178,16 @@ export class DialogueService {
     npcProfession: NPCProfession,
     personality: NPCPersonality,
     currentMood: NPCMood,
-    context: DialogueContext
+    context: DialogueContext,
   ): string {
     const contentParts: string[] = [];
 
     // 基於職業的專業話題
     const professionalContent = this.generateProfessionalContent(
-      npcProfession, personality, currentMood, context
+      npcProfession,
+      personality,
+      currentMood,
+      context,
     );
     if (professionalContent) contentParts.push(professionalContent);
 
@@ -175,23 +197,32 @@ export class DialogueService {
 
     // 基於天氣的評論
     if (personality.traits.chattiness >= 6) {
-      const weatherComment = this.generateWeatherComment(context.weather, personality);
+      const weatherComment = this.generateWeatherComment(
+        context.weather,
+        personality,
+      );
       if (weatherComment) contentParts.push(weatherComment);
     }
 
     // 基於玩家關係的內容
     const relationshipContent = this.generateRelationshipContent(
-      context.friendshipLevel, context.friendshipScore, personality
+      context.friendshipLevel,
+      context.friendshipScore,
+      personality,
     );
     if (relationshipContent) contentParts.push(relationshipContent);
 
     // 基於最近事件的內容
     const eventContent = this.generateRecentEventContent(
-      currentMood.recentEvents, personality
+      currentMood.recentEvents,
+      personality,
     );
     if (eventContent) contentParts.push(eventContent);
 
-    return contentParts.join(' ') || this.getDefaultContent(npcProfession, personality);
+    return (
+      contentParts.join(" ") ||
+      this.getDefaultContent(npcProfession, personality)
+    );
   }
 
   /**
@@ -201,52 +232,52 @@ export class DialogueService {
     profession: NPCProfession,
     personality: NPCPersonality,
     currentMood: NPCMood,
-    context: DialogueContext
+    context: DialogueContext,
   ): string {
     const contents: string[] = [];
 
     switch (profession) {
       case NPCProfession.MINER:
         if (personality.traits.pride >= 7) {
-          contents.push('我在這個礦坑工作了很多年，沒人比我更了解這裡的礦脈');
+          contents.push("我在這個礦坑工作了很多年，沒人比我更了解這裡的礦脈");
         }
         if (currentMood.energy < 30) {
-          contents.push('今天挖礦特別累，這些礦石越來越難找了');
+          contents.push("今天挖礦特別累，這些礦石越來越難找了");
         } else {
-          contents.push('今天運氣不錯，挖到了一些不錯的礦石');
+          contents.push("今天運氣不錯，挖到了一些不錯的礦石");
         }
-        if (context.weather === 'rainy') {
-          contents.push('下雨天最適合在礦坑裡工作，外面太濕了');
+        if (context.weather === "rainy") {
+          contents.push("下雨天最適合在礦坑裡工作，外面太濕了");
         }
         break;
 
       case NPCProfession.CRAFTER:
         if (personality.traits.pride >= 6) {
-          contents.push('我的手藝在這個村子裡是數一數二的');
+          contents.push("我的手藝在這個村子裡是數一數二的");
         }
         if (currentMood.satisfaction >= 70) {
-          contents.push('最近完成了幾件很滿意的作品');
+          contents.push("最近完成了幾件很滿意的作品");
         }
         if (personality.traits.helpfulness >= 7) {
-          contents.push('如果你需要什麼特別的東西，我可以試著為你製作');
+          contents.push("如果你需要什麼特別的東西，我可以試著為你製作");
         }
         break;
 
       case NPCProfession.WOODCUTTER:
-        if (context.season === 'autumn') {
-          contents.push('秋天是砍伐木材的最佳時機，樹木正在準備過冬');
+        if (context.season === "autumn") {
+          contents.push("秋天是砍伐木材的最佳時機，樹木正在準備過冬");
         }
         if (personality.traits.friendliness >= 6) {
-          contents.push('森林裡總是很安靜，有時候很想和人聊聊天');
+          contents.push("森林裡總是很安靜，有時候很想和人聊聊天");
         }
         break;
 
       case NPCProfession.SCHOLAR:
         if (personality.traits.curiosity >= 8) {
-          contents.push('我一直在研究古老的文獻，發現了一些有趣的東西');
+          contents.push("我一直在研究古老的文獻，發現了一些有趣的東西");
         }
         if (personality.traits.chattiness >= 7) {
-          contents.push('知識應該被分享，你想聽聽我最近的發現嗎？');
+          contents.push("知識應該被分享，你想聽聽我最近的發現嗎？");
         }
         break;
     }
@@ -259,34 +290,34 @@ export class DialogueService {
    */
   private generateMoodBasedContent(
     currentMood: NPCMood,
-    personality: NPCPersonality
+    personality: NPCPersonality,
   ): string {
     const contents: string[] = [];
 
     switch (currentMood.currentMood) {
-      case 'happy':
+      case "happy":
         if (personality.traits.chattiness >= 6) {
-          contents.push('今天心情特別好！');
-          contents.push('最近發生了一些不錯的事情');
+          contents.push("今天心情特別好！");
+          contents.push("最近發生了一些不錯的事情");
         }
         break;
 
-      case 'tired':
-        contents.push('最近工作有點累');
+      case "tired":
+        contents.push("最近工作有點累");
         if (personality.traits.chattiness >= 5) {
-          contents.push('感覺需要好好休息一下');
+          contents.push("感覺需要好好休息一下");
         }
         break;
 
-      case 'worried':
+      case "worried":
         if (personality.traits.trustfulness >= 6) {
-          contents.push('最近有些事情讓我擔心');
+          contents.push("最近有些事情讓我擔心");
         }
         break;
 
-      case 'angry':
+      case "angry":
         if (personality.traits.patience <= 4) {
-          contents.push('今天遇到了一些煩人的事');
+          contents.push("今天遇到了一些煩人的事");
         }
         break;
     }
@@ -299,28 +330,28 @@ export class DialogueService {
    */
   private generateWeatherComment(
     weather: string,
-    personality: NPCPersonality
+    personality: NPCPersonality,
   ): string {
     const comments: string[] = [];
 
     switch (weather) {
-      case 'sunny':
-        comments.push('今天天氣真不錯');
-        comments.push('陽光明媚的日子讓人心情愉快');
+      case "sunny":
+        comments.push("今天天氣真不錯");
+        comments.push("陽光明媚的日子讓人心情愉快");
         break;
-      case 'rainy':
+      case "rainy":
         if (personality.traits.patience >= 6) {
-          comments.push('雨天有雨天的美好');
+          comments.push("雨天有雨天的美好");
         } else {
-          comments.push('這雨真是討厭');
+          comments.push("這雨真是討厭");
         }
         break;
-      case 'stormy':
-        comments.push('外面的風暴聲真大');
+      case "stormy":
+        comments.push("外面的風暴聲真大");
         break;
     }
 
-    return comments[Math.floor(Math.random() * comments.length)] || '';
+    return comments[Math.floor(Math.random() * comments.length)] || "";
   }
 
   /**
@@ -329,26 +360,29 @@ export class DialogueService {
   private generateRelationshipContent(
     friendshipLevel: FriendshipLevel,
     friendshipScore: number,
-    personality: NPCPersonality
+    personality: NPCPersonality,
   ): string {
     const contents: string[] = [];
 
     if (friendshipLevel === FriendshipLevel.BEST_FRIEND) {
-      contents.push('很高興我們成為了好朋友');
+      contents.push("很高興我們成為了好朋友");
       if (personality.traits.trustfulness >= 7) {
-        contents.push('我可以完全信任你');
+        contents.push("我可以完全信任你");
       }
     } else if (friendshipLevel === FriendshipLevel.CLOSE_FRIEND) {
-      contents.push('你是個值得信賴的人');
+      contents.push("你是個值得信賴的人");
     } else if (friendshipLevel === FriendshipLevel.FRIENDLY) {
-      contents.push('很高興認識你');
-    } else if (friendshipLevel === FriendshipLevel.NEUTRAL && personality.traits.curiosity >= 6) {
-      contents.push('我對你還不太了解，但願意多認識你');
+      contents.push("很高興認識你");
+    } else if (
+      friendshipLevel === FriendshipLevel.NEUTRAL &&
+      personality.traits.curiosity >= 6
+    ) {
+      contents.push("我對你還不太了解，但願意多認識你");
     } else if (friendshipLevel === FriendshipLevel.UNFRIENDLY) {
       if (personality.traits.patience >= 5) {
-        contents.push('也許我們可以重新開始');
+        contents.push("也許我們可以重新開始");
       } else {
-        contents.push('我們之間似乎有些誤會');
+        contents.push("我們之間似乎有些誤會");
       }
     }
 
@@ -359,23 +393,24 @@ export class DialogueService {
    * 基於最近事件生成內容
    */
   private generateRecentEventContent(
-    recentEvents: NPCMood['recentEvents'],
-    personality: NPCPersonality
+    recentEvents: NPCMood["recentEvents"],
+    personality: NPCPersonality,
   ): string {
-    if (recentEvents.length === 0 || personality.traits.chattiness < 5) return '';
+    if (recentEvents.length === 0 || personality.traits.chattiness < 5)
+      return "";
 
     const recentEvent = recentEvents[0]; // 最近的事件
     const contents: string[] = [];
 
     switch (recentEvent.type) {
-      case 'success':
+      case "success":
         if (personality.traits.pride >= 6) {
           contents.push(`剛才${recentEvent.description}，感覺很有成就感`);
         } else {
           contents.push(`最近${recentEvent.description}，運氣還不錯`);
         }
         break;
-      case 'failure':
+      case "failure":
         if (personality.traits.patience >= 6) {
           contents.push(`雖然${recentEvent.description}，但我會繼續努力`);
         } else {
@@ -393,66 +428,66 @@ export class DialogueService {
   private generateResponseOptions(
     npcType: NPCType,
     personality: NPCPersonality,
-    context: DialogueContext
-  ): GeneratedDialogue['availableResponses'] {
-    const responses: GeneratedDialogue['availableResponses'] = [];
+    context: DialogueContext,
+  ): GeneratedDialogue["availableResponses"] {
+    const responses: GeneratedDialogue["availableResponses"] = [];
 
     // 基礎對話選項
     if (personality.traits.chattiness >= 5) {
       responses.push({
-        id: 'chat',
-        text: '聊聊天吧',
-        type: 'friendly'
+        id: "chat",
+        text: "聊聊天吧",
+        type: "friendly",
       });
     }
 
     // 商業相關選項
     if (context.hasShop) {
       responses.push({
-        id: 'shop',
-        text: '我想看看你的商品',
-        type: 'business',
-        action: 'open_shop'
+        id: "shop",
+        text: "我想看看你的商品",
+        type: "business",
+        action: "open_shop",
       });
     }
 
     // 任務相關選項
     if (context.hasQuests) {
       responses.push({
-        id: 'quest',
-        text: '有什麼我可以幫忙的嗎？',
-        type: 'quest',
-        action: 'show_quests'
+        id: "quest",
+        text: "有什麼我可以幫忙的嗎？",
+        type: "quest",
+        action: "show_quests",
       });
     }
 
     // 學習相關選項
     if (context.canTeach && npcType === NPCType.TRAINER) {
       responses.push({
-        id: 'learn',
-        text: '你可以教我一些技能嗎？',
-        type: 'learning',
-        action: 'show_skills',
-        requiresFriendship: FriendshipLevel.FRIENDLY
+        id: "learn",
+        text: "你可以教我一些技能嗎？",
+        type: "learning",
+        action: "show_skills",
+        requiresFriendship: FriendshipLevel.FRIENDLY,
       });
     }
 
     // 特殊友誼選項
     if (context.friendshipLevel === FriendshipLevel.CLOSE_FRIEND) {
       responses.push({
-        id: 'special',
-        text: '最近過得怎麼樣？',
-        type: 'friendly',
-        requiresFriendship: FriendshipLevel.CLOSE_FRIEND
+        id: "special",
+        text: "最近過得怎麼樣？",
+        type: "friendly",
+        requiresFriendship: FriendshipLevel.CLOSE_FRIEND,
       });
     }
 
     // 告別選項
     responses.push({
-      id: 'goodbye',
+      id: "goodbye",
       text: this.generateGoodbyeText(personality),
-      type: 'goodbye',
-      action: 'end_conversation'
+      type: "goodbye",
+      action: "end_conversation",
     });
 
     return responses;
@@ -463,12 +498,18 @@ export class DialogueService {
    */
   private generateGoodbyeText(personality: NPCPersonality): string {
     if (personality.traits.friendliness >= 7) {
-      const friendlyGoodbyes = ['回頭見！', '祝你有美好的一天！', '期待下次見面！'];
-      return friendlyGoodbyes[Math.floor(Math.random() * friendlyGoodbyes.length)];
+      const friendlyGoodbyes = [
+        "回頭見！",
+        "祝你有美好的一天！",
+        "期待下次見面！",
+      ];
+      return friendlyGoodbyes[
+        Math.floor(Math.random() * friendlyGoodbyes.length)
+      ];
     } else if (personality.traits.friendliness >= 4) {
-      return '再見';
+      return "再見";
     } else {
-      return '嗯';
+      return "嗯";
     }
   }
 
@@ -477,18 +518,18 @@ export class DialogueService {
    */
   private analyzePersonalityShown(
     personality: NPCPersonality,
-    currentMood: NPCMood
+    currentMood: NPCMood,
   ): string[] {
     const traits: string[] = [];
 
-    if (personality.traits.friendliness >= 7) traits.push('友善');
-    if (personality.traits.chattiness >= 7) traits.push('健談');
-    if (personality.traits.helpfulness >= 7) traits.push('樂於助人');
-    if (personality.traits.pride >= 7) traits.push('自豪');
-    if (personality.traits.curiosity >= 7) traits.push('好奇');
+    if (personality.traits.friendliness >= 7) traits.push("友善");
+    if (personality.traits.chattiness >= 7) traits.push("健談");
+    if (personality.traits.helpfulness >= 7) traits.push("樂於助人");
+    if (personality.traits.pride >= 7) traits.push("自豪");
+    if (personality.traits.curiosity >= 7) traits.push("好奇");
 
-    if (currentMood.currentMood === 'happy') traits.push('愉快');
-    if (currentMood.currentMood === 'tired') traits.push('疲憊');
+    if (currentMood.currentMood === "happy") traits.push("愉快");
+    if (currentMood.currentMood === "tired") traits.push("疲憊");
 
     return traits;
   }
@@ -499,10 +540,10 @@ export class DialogueService {
   private selectRandomWithWeight(
     options: string[],
     personality: NPCPersonality,
-    currentMood: NPCMood | null
+    currentMood: NPCMood | null,
   ): string {
-    if (options.length === 0) return '';
-    
+    if (options.length === 0) return "";
+
     // 簡單隨機選擇，實際可以根據性格特徵調整權重
     return options[Math.floor(Math.random() * options.length)];
   }
@@ -512,15 +553,15 @@ export class DialogueService {
    */
   private getTimeGreeting(timeOfDay: string): string {
     const greetings = {
-      dawn: '早安',
-      morning: '早上好',
-      noon: '午安',
-      afternoon: '下午好',
-      evening: '晚上好',
-      night: '夜深了'
+      dawn: "早安",
+      morning: "早上好",
+      noon: "午安",
+      afternoon: "下午好",
+      evening: "晚上好",
+      night: "夜深了",
     };
-    
-    return greetings[timeOfDay] || '你好';
+
+    return greetings[timeOfDay] || "你好";
   }
 
   /**
@@ -528,23 +569,23 @@ export class DialogueService {
    */
   private getDefaultContent(
     profession: NPCProfession,
-    personality: NPCPersonality
+    personality: NPCPersonality,
   ): string {
     if (personality.traits.chattiness <= 3) {
-      return '...'; // 不愛說話的人
+      return "..."; // 不愛說話的人
     }
 
     const defaults = {
-      [NPCProfession.MINER]: '我在這裡挖礦工作',
-      [NPCProfession.CRAFTER]: '我是個工匠',
-      [NPCProfession.WOODCUTTER]: '我負責砍伐木材',
-      [NPCProfession.SCHOLAR]: '我在研究各種知識',
-      [NPCProfession.FARMER]: '我在這裡務農',
-      [NPCProfession.FISHER]: '我在河邊釣魚',
-      [NPCProfession.HUNTER]: '我是個獵人',
-      [NPCProfession.HEALER]: '我可以治療傷患'
+      [NPCProfession.MINER]: "我在這裡挖礦工作",
+      [NPCProfession.CRAFTER]: "我是個工匠",
+      [NPCProfession.WOODCUTTER]: "我負責砍伐木材",
+      [NPCProfession.SCHOLAR]: "我在研究各種知識",
+      [NPCProfession.FARMER]: "我在這裡務農",
+      [NPCProfession.FISHER]: "我在河邊釣魚",
+      [NPCProfession.HUNTER]: "我是個獵人",
+      [NPCProfession.HEALER]: "我可以治療傷患",
     };
 
-    return defaults[profession] || '我在這裡工作';
+    return defaults[profession] || "我在這裡工作";
   }
 }

@@ -1,13 +1,18 @@
-import { Injectable, Logger, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ItemsService } from '../items/items.service';
-import { ItemQuality } from '../items/items.types';
-import { 
-  CharacterClass, 
-  calculateMagicalStorageCapacity, 
-  calculateStorageMana, 
-  calculateRetrievalMana 
-} from './character-classes.types';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { ItemsService } from "../items/items.service";
+import { ItemQuality } from "../items/items.types";
+import {
+  CharacterClass,
+  calculateMagicalStorageCapacity,
+  calculateStorageMana,
+  calculateRetrievalMana,
+} from "./character-classes.types";
 
 // 魔法收納物品接口
 export interface MagicalStorageItem {
@@ -38,7 +43,7 @@ export class MagicalStorageService {
 
   constructor(
     private prisma: PrismaService,
-    private itemsService: ItemsService
+    private itemsService: ItemsService,
   ) {}
 
   /**
@@ -48,25 +53,27 @@ export class MagicalStorageService {
     const character = await this.prisma.gameCharacter.findUnique({
       where: { id: characterId },
       include: {
-        knowledges: true
-      }
+        knowledges: true,
+      },
     });
 
     if (!character) {
-      throw new BadRequestException('角色不存在');
+      throw new BadRequestException("角色不存在");
     }
 
     if (character.characterClass !== CharacterClass.MAGE) {
-      throw new ForbiddenException('只有法師才能使用魔法收納');
+      throw new ForbiddenException("只有法師才能使用魔法收納");
     }
 
     // 檢查是否學會了魔法收納技能
     const hasMagicalStorageSkill = character.knowledges.some(
-      k => k.knowledgeName === '空間魔法 - 魔法收納術'
+      (k) => k.knowledgeName === "空間魔法 - 魔法收納術",
     );
 
     if (!hasMagicalStorageSkill) {
-      throw new ForbiddenException('需要先學會「空間魔法 - 魔法收納術」才能使用魔法收納');
+      throw new ForbiddenException(
+        "需要先學會「空間魔法 - 魔法收納術」才能使用魔法收納",
+      );
     }
 
     return character;
@@ -77,18 +84,20 @@ export class MagicalStorageService {
    */
   async initializeMagicalStorage(characterId: string): Promise<void> {
     const character = await this.validateMageCharacter(characterId);
-    
+
     if (character.magicalStorageCapacity === 0) {
       const capacity = calculateMagicalStorageCapacity(character.intelligence);
-      
+
       await this.prisma.gameCharacter.update({
         where: { id: characterId },
         data: {
-          magicalStorageCapacity: capacity
-        }
+          magicalStorageCapacity: capacity,
+        },
       });
 
-      this.logger.log(`法師 ${characterId} 魔法收納容量初始化為 ${capacity.toFixed(1)}kg`);
+      this.logger.log(
+        `法師 ${characterId} 魔法收納容量初始化為 ${capacity.toFixed(1)}kg`,
+      );
     }
   }
 
@@ -112,16 +121,16 @@ export class MagicalStorageService {
         mana: true,
         maxMana: true,
         magicalStorageCapacity: true,
-        magicalStorageUsed: true
-      }
+        magicalStorageUsed: true,
+      },
     });
 
     if (!character) {
-      throw new BadRequestException('角色不存在');
+      throw new BadRequestException("角色不存在");
     }
 
     const isAvailable = character.characterClass === CharacterClass.MAGE;
-    
+
     if (!isAvailable) {
       return {
         isAvailable: false,
@@ -130,7 +139,7 @@ export class MagicalStorageService {
         available: 0,
         usagePercentage: 0,
         currentMana: character.mana,
-        maxMana: character.maxMana
+        maxMana: character.maxMana,
       };
     }
 
@@ -140,7 +149,7 @@ export class MagicalStorageService {
       capacity = calculateMagicalStorageCapacity(character.intelligence);
       await this.prisma.gameCharacter.update({
         where: { id: characterId },
-        data: { magicalStorageCapacity: capacity }
+        data: { magicalStorageCapacity: capacity },
       });
     }
 
@@ -155,21 +164,21 @@ export class MagicalStorageService {
       available,
       usagePercentage,
       currentMana: character.mana,
-      maxMana: character.maxMana
+      maxMana: character.maxMana,
     };
   }
 
   /**
    * 獲取魔法收納中的所有物品
    */
-  async getMagicalStorageItems(characterId: string): Promise<MagicalStorageItem[]> {
+  async getMagicalStorageItems(
+    characterId: string,
+  ): Promise<MagicalStorageItem[]> {
     await this.validateMageCharacter(characterId);
 
     const storageItems = await this.prisma.magicalStorage.findMany({
       where: { characterId },
-      orderBy: [
-        { storedAt: 'desc' }
-      ]
+      orderBy: [{ storedAt: "desc" }],
     });
 
     const result: MagicalStorageItem[] = [];
@@ -184,7 +193,7 @@ export class MagicalStorageService {
           manaUsed: dbItem.manaUsed,
           storedAt: dbItem.storedAt,
           lastAccessedAt: dbItem.lastAccessedAt,
-          itemDetails
+          itemDetails,
         });
       }
     }
@@ -199,10 +208,10 @@ export class MagicalStorageService {
     characterId: string,
     itemId: string,
     quantity: number,
-    quality: ItemQuality = ItemQuality.COMMON
+    quality: ItemQuality = ItemQuality.COMMON,
   ): Promise<MagicalStorageResult> {
     const character = await this.validateMageCharacter(characterId);
-    
+
     // 確保魔法收納已初始化
     await this.initializeMagicalStorage(characterId);
 
@@ -210,7 +219,7 @@ export class MagicalStorageService {
     if (!item) {
       return {
         success: false,
-        message: '物品不存在'
+        message: "物品不存在",
       };
     }
 
@@ -221,7 +230,7 @@ export class MagicalStorageService {
     if (character.mana < manaRequired) {
       return {
         success: false,
-        message: `魔力不足，需要 ${manaRequired.toFixed(1)} 魔力，目前只有 ${character.mana.toFixed(1)} 魔力`
+        message: `魔力不足，需要 ${manaRequired.toFixed(1)} 魔力，目前只有 ${character.mana.toFixed(1)} 魔力`,
       };
     }
 
@@ -230,7 +239,7 @@ export class MagicalStorageService {
     if (storageInfo.available < itemWeight) {
       return {
         success: false,
-        message: `魔法收納空間不足，需要 ${itemWeight.toFixed(1)}kg，只有 ${storageInfo.available.toFixed(1)}kg 可用空間`
+        message: `魔法收納空間不足，需要 ${itemWeight.toFixed(1)}kg，只有 ${storageInfo.available.toFixed(1)}kg 可用空間`,
       };
     }
 
@@ -239,14 +248,14 @@ export class MagicalStorageService {
       where: {
         characterId,
         itemId,
-        quality: quality.toString()
-      }
+        quality: quality.toString(),
+      },
     });
 
     if (!inventoryItem || inventoryItem.quantity < quantity) {
       return {
         success: false,
-        message: `背包中物品數量不足，需要 ${quantity} 個，背包中只有 ${inventoryItem?.quantity || 0} 個`
+        message: `背包中物品數量不足，需要 ${quantity} 個，背包中只有 ${inventoryItem?.quantity || 0} 個`,
       };
     }
 
@@ -256,15 +265,16 @@ export class MagicalStorageService {
         // 從背包移除物品
         if (inventoryItem.quantity === quantity) {
           await prisma.playerInventory.delete({
-            where: { id: inventoryItem.id }
+            where: { id: inventoryItem.id },
           });
         } else {
           await prisma.playerInventory.update({
             where: { id: inventoryItem.id },
             data: {
               quantity: inventoryItem.quantity - quantity,
-              totalWeight: (inventoryItem.quantity - quantity) * inventoryItem.weight
-            }
+              totalWeight:
+                (inventoryItem.quantity - quantity) * inventoryItem.weight,
+            },
           });
         }
 
@@ -273,8 +283,8 @@ export class MagicalStorageService {
           where: {
             characterId,
             itemId,
-            quality: quality.toString()
-          }
+            quality: quality.toString(),
+          },
         });
 
         if (existingStorage) {
@@ -284,8 +294,8 @@ export class MagicalStorageService {
             data: {
               quantity: existingStorage.quantity + quantity,
               manaUsed: existingStorage.manaUsed + manaRequired,
-              lastAccessedAt: new Date()
-            }
+              lastAccessedAt: new Date(),
+            },
           });
         } else {
           // 創建新的收納記錄
@@ -295,8 +305,8 @@ export class MagicalStorageService {
               itemId,
               quantity,
               quality: quality.toString(),
-              manaUsed: manaRequired
-            }
+              manaUsed: manaRequired,
+            },
           });
         }
 
@@ -305,25 +315,27 @@ export class MagicalStorageService {
           where: { id: characterId },
           data: {
             mana: character.mana - manaRequired,
-            magicalStorageUsed: character.magicalStorageUsed + itemWeight
-          }
+            magicalStorageUsed: character.magicalStorageUsed + itemWeight,
+          },
         });
 
         // 更新背包總重量
         const totalWeight = await prisma.playerInventory.aggregate({
           where: { characterId },
-          _sum: { totalWeight: true }
+          _sum: { totalWeight: true },
         });
 
         await prisma.gameCharacter.update({
           where: { id: characterId },
           data: {
-            currentWeight: totalWeight._sum.totalWeight || 0
-          }
+            currentWeight: totalWeight._sum.totalWeight || 0,
+          },
         });
       });
 
-      this.logger.log(`法師 ${characterId} 收納物品 ${quantity}x ${itemId} (${quality})，消耗魔力 ${manaRequired.toFixed(1)}`);
+      this.logger.log(
+        `法師 ${characterId} 收納物品 ${quantity}x ${itemId} (${quality})，消耗魔力 ${manaRequired.toFixed(1)}`,
+      );
 
       return {
         success: true,
@@ -331,14 +343,13 @@ export class MagicalStorageService {
         manaConsumed: manaRequired,
         newManaAmount: character.mana - manaRequired,
         storageUsed: character.magicalStorageUsed + itemWeight,
-        storageCapacity: storageInfo.capacity
+        storageCapacity: storageInfo.capacity,
       };
-
     } catch (error) {
-      this.logger.error('魔法收納失敗:', error);
+      this.logger.error("魔法收納失敗:", error);
       return {
         success: false,
-        message: '魔法收納過程中發生錯誤'
+        message: "魔法收納過程中發生錯誤",
       };
     }
   }
@@ -349,30 +360,30 @@ export class MagicalStorageService {
   async retrieveItem(
     characterId: string,
     storageId: string,
-    quantity?: number
+    quantity?: number,
   ): Promise<MagicalStorageResult> {
     const character = await this.validateMageCharacter(characterId);
 
     const storageItem = await this.prisma.magicalStorage.findFirst({
       where: {
         id: storageId,
-        characterId
-      }
+        characterId,
+      },
     });
 
     if (!storageItem) {
       return {
         success: false,
-        message: '魔法收納中沒有這個物品'
+        message: "魔法收納中沒有這個物品",
       };
     }
 
     const retrieveQuantity = quantity || storageItem.quantity;
-    
+
     if (retrieveQuantity > storageItem.quantity) {
       return {
         success: false,
-        message: `數量超出限制，最多只能取出 ${storageItem.quantity} 個`
+        message: `數量超出限制，最多只能取出 ${storageItem.quantity} 個`,
       };
     }
 
@@ -380,22 +391,24 @@ export class MagicalStorageService {
     if (!item) {
       return {
         success: false,
-        message: '物品資料錯誤'
+        message: "物品資料錯誤",
       };
     }
 
     // 計算取出魔力消耗
     const manaPerItem = storageItem.manaUsed / storageItem.quantity;
-    const retrievalMana = calculateRetrievalMana(manaPerItem * retrieveQuantity);
+    const retrievalMana = calculateRetrievalMana(
+      manaPerItem * retrieveQuantity,
+    );
 
     if (character.mana < retrievalMana) {
       return {
         success: false,
-        message: `魔力不足，需要 ${retrievalMana.toFixed(1)} 魔力進行取出`
+        message: `魔力不足，需要 ${retrievalMana.toFixed(1)} 魔力進行取出`,
       };
     }
 
-    const itemWeight = (item.attributes?.weight || 0);
+    const itemWeight = item.attributes?.weight || 0;
     const totalRetrieveWeight = itemWeight * retrieveQuantity;
 
     // 檢查背包負重
@@ -403,7 +416,7 @@ export class MagicalStorageService {
     if (capacityInfo.availableCapacity < totalRetrieveWeight) {
       return {
         success: false,
-        message: `背包負重不足，需要 ${totalRetrieveWeight.toFixed(1)}kg，只有 ${capacityInfo.availableCapacity.toFixed(1)}kg 可用空間`
+        message: `背包負重不足，需要 ${totalRetrieveWeight.toFixed(1)}kg，只有 ${capacityInfo.availableCapacity.toFixed(1)}kg 可用空間`,
       };
     }
 
@@ -412,17 +425,18 @@ export class MagicalStorageService {
         // 更新或刪除魔法收納記錄
         if (retrieveQuantity === storageItem.quantity) {
           await prisma.magicalStorage.delete({
-            where: { id: storageId }
+            where: { id: storageId },
           });
         } else {
-          const remainingMana = storageItem.manaUsed - (manaPerItem * retrieveQuantity);
+          const remainingMana =
+            storageItem.manaUsed - manaPerItem * retrieveQuantity;
           await prisma.magicalStorage.update({
             where: { id: storageId },
             data: {
               quantity: storageItem.quantity - retrieveQuantity,
               manaUsed: remainingMana,
-              lastAccessedAt: new Date()
-            }
+              lastAccessedAt: new Date(),
+            },
           });
         }
 
@@ -431,8 +445,8 @@ export class MagicalStorageService {
           where: {
             characterId,
             itemId: storageItem.itemId,
-            quality: storageItem.quality
-          }
+            quality: storageItem.quality,
+          },
         });
 
         if (existingInventory && existingInventory.isStackable) {
@@ -440,8 +454,9 @@ export class MagicalStorageService {
             where: { id: existingInventory.id },
             data: {
               quantity: existingInventory.quantity + retrieveQuantity,
-              totalWeight: (existingInventory.quantity + retrieveQuantity) * itemWeight
-            }
+              totalWeight:
+                (existingInventory.quantity + retrieveQuantity) * itemWeight,
+            },
           });
         } else {
           const itemVolume = item.attributes?.volume || 0;
@@ -457,8 +472,8 @@ export class MagicalStorageService {
               totalVolume: itemVolume * retrieveQuantity,
               isStackable: item.stackable || false,
               maxStack: item.maxStack || 1,
-              condition: 100.0
-            }
+              condition: 100.0,
+            },
           });
         }
 
@@ -467,39 +482,41 @@ export class MagicalStorageService {
           where: { id: characterId },
           data: {
             mana: character.mana - retrievalMana,
-            magicalStorageUsed: character.magicalStorageUsed - totalRetrieveWeight
-          }
+            magicalStorageUsed:
+              character.magicalStorageUsed - totalRetrieveWeight,
+          },
         });
 
         // 更新背包總重量
         const totalWeight = await prisma.playerInventory.aggregate({
           where: { characterId },
-          _sum: { totalWeight: true }
+          _sum: { totalWeight: true },
         });
 
         await prisma.gameCharacter.update({
           where: { id: characterId },
           data: {
-            currentWeight: totalWeight._sum.totalWeight || 0
-          }
+            currentWeight: totalWeight._sum.totalWeight || 0,
+          },
         });
       });
 
-      this.logger.log(`法師 ${characterId} 取出物品 ${retrieveQuantity}x ${storageItem.itemId}，消耗魔力 ${retrievalMana.toFixed(1)}`);
+      this.logger.log(
+        `法師 ${characterId} 取出物品 ${retrieveQuantity}x ${storageItem.itemId}，消耗魔力 ${retrievalMana.toFixed(1)}`,
+      );
 
       return {
         success: true,
         message: `成功取出 ${retrieveQuantity}x ${item.name}`,
         manaConsumed: retrievalMana,
         newManaAmount: character.mana - retrievalMana,
-        storageUsed: character.magicalStorageUsed - totalRetrieveWeight
+        storageUsed: character.magicalStorageUsed - totalRetrieveWeight,
       };
-
     } catch (error) {
-      this.logger.error('魔法取出失敗:', error);
+      this.logger.error("魔法取出失敗:", error);
       return {
         success: false,
-        message: '魔法取出過程中發生錯誤'
+        message: "魔法取出過程中發生錯誤",
       };
     }
   }
@@ -510,40 +527,48 @@ export class MagicalStorageService {
   private async getInventoryCapacity(characterId: string) {
     const character = await this.prisma.gameCharacter.findUnique({
       where: { id: characterId },
-      select: { carryingCapacity: true, currentWeight: true }
+      select: { carryingCapacity: true, currentWeight: true },
     });
 
     if (!character) {
-      throw new BadRequestException('角色不存在');
+      throw new BadRequestException("角色不存在");
     }
 
     return {
       maxCapacity: character.carryingCapacity,
       currentWeight: character.currentWeight,
-      availableCapacity: Math.max(0, character.carryingCapacity - character.currentWeight)
+      availableCapacity: Math.max(
+        0,
+        character.carryingCapacity - character.currentWeight,
+      ),
     };
   }
 
   /**
    * 升級時更新魔法收納容量（智力提升時調用）
    */
-  async updateMagicalStorageCapacity(characterId: string, newIntelligence: number): Promise<void> {
+  async updateMagicalStorageCapacity(
+    characterId: string,
+    newIntelligence: number,
+  ): Promise<void> {
     const character = await this.prisma.gameCharacter.findUnique({
       where: { id: characterId },
-      select: { characterClass: true }
+      select: { characterClass: true },
     });
 
     if (character?.characterClass === CharacterClass.MAGE) {
       const newCapacity = calculateMagicalStorageCapacity(newIntelligence);
-      
+
       await this.prisma.gameCharacter.update({
         where: { id: characterId },
         data: {
-          magicalStorageCapacity: newCapacity
-        }
+          magicalStorageCapacity: newCapacity,
+        },
       });
 
-      this.logger.log(`法師 ${characterId} 魔法收納容量更新為 ${newCapacity.toFixed(1)}kg`);
+      this.logger.log(
+        `法師 ${characterId} 魔法收納容量更新為 ${newCapacity.toFixed(1)}kg`,
+      );
     }
   }
 }

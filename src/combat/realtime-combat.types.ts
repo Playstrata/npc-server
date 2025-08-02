@@ -26,7 +26,7 @@ export interface MovementState {
 // 攻擊狀態
 export interface AttackState {
   isAttacking: boolean;
-  attackType: 'MELEE' | 'RANGED' | 'MAGIC' | 'SKILL';
+  attackType: "MELEE" | "RANGED" | "MAGIC" | "SKILL";
   attackStartTime?: Date;
   attackDuration: number; // 攻擊動作持續時間(毫秒)
   cooldownEndTime?: Date;
@@ -54,8 +54,8 @@ export interface RealtimePlayerState {
     physicalDefense: number;
     magicalDefense: number;
     attackSpeed: number; // 攻擊速度倍率
-    moveSpeed: number;    // 移動速度
-    attackRange: number;  // 攻擊範圍
+    moveSpeed: number; // 移動速度
+    attackRange: number; // 攻擊範圍
     criticalRate: number;
     criticalDamage: number;
     accuracy: number;
@@ -86,7 +86,7 @@ export interface RealtimeMonsterState {
     attackSpeed: number;
     moveSpeed: number;
     attackRange: number;
-    aggroRange: number;   // 仇恨範圍
+    aggroRange: number; // 仇恨範圍
     criticalRate: number;
     criticalDamage: number;
     accuracy: number;
@@ -101,7 +101,7 @@ export interface RealtimeMonsterState {
 
 // 怪物AI狀態
 export interface MonsterAIState {
-  currentBehavior: 'IDLE' | 'PATROL' | 'CHASE' | 'ATTACK' | 'FLEE' | 'RETURN';
+  currentBehavior: "IDLE" | "PATROL" | "CHASE" | "ATTACK" | "FLEE" | "RETURN";
   homePosition: Vector2D; // 怪物的原始位置
   patrolPoints: Vector2D[]; // 巡邏路線
   currentPatrolIndex: number;
@@ -119,7 +119,7 @@ export interface MonsterAIState {
 // 狀態效果
 export interface StatusEffect {
   id: string;
-  type: 'BUFF' | 'DEBUFF' | 'DOT' | 'HOT'; // DOT=持續傷害, HOT=持續治療
+  type: "BUFF" | "DEBUFF" | "DOT" | "HOT"; // DOT=持續傷害, HOT=持續治療
   name: string;
   description: string;
   duration: number; // 剩餘持續時間(毫秒)
@@ -133,26 +133,26 @@ export interface StatusEffect {
 
 // 即時戰鬥事件
 export enum RealtimeCombatEventType {
-  PLAYER_MOVE = 'PLAYER_MOVE',
-  MONSTER_MOVE = 'MONSTER_MOVE',
-  PLAYER_ATTACK_START = 'PLAYER_ATTACK_START',
-  PLAYER_ATTACK_HIT = 'PLAYER_ATTACK_HIT',
-  PLAYER_ATTACK_MISS = 'PLAYER_ATTACK_MISS',
-  MONSTER_ATTACK_START = 'MONSTER_ATTACK_START',
-  MONSTER_ATTACK_HIT = 'MONSTER_ATTACK_HIT',
-  MONSTER_ATTACK_MISS = 'MONSTER_ATTACK_MISS',
-  DAMAGE_DEALT = 'DAMAGE_DEALT',
-  HEALING_RECEIVED = 'HEALING_RECEIVED',
-  STATUS_EFFECT_APPLIED = 'STATUS_EFFECT_APPLIED',
-  STATUS_EFFECT_REMOVED = 'STATUS_EFFECT_REMOVED',
-  CRITICAL_HIT = 'CRITICAL_HIT',
-  PLAYER_DEATH = 'PLAYER_DEATH',
-  MONSTER_DEATH = 'MONSTER_DEATH',
-  MONSTER_SPAWN = 'MONSTER_SPAWN',
-  COMBAT_START = 'COMBAT_START',
-  COMBAT_END = 'COMBAT_END',
-  PLAYER_LEVEL_UP = 'PLAYER_LEVEL_UP',
-  ITEM_DROP = 'ITEM_DROP'
+  PLAYER_MOVE = "PLAYER_MOVE",
+  MONSTER_MOVE = "MONSTER_MOVE",
+  PLAYER_ATTACK_START = "PLAYER_ATTACK_START",
+  PLAYER_ATTACK_HIT = "PLAYER_ATTACK_HIT",
+  PLAYER_ATTACK_MISS = "PLAYER_ATTACK_MISS",
+  MONSTER_ATTACK_START = "MONSTER_ATTACK_START",
+  MONSTER_ATTACK_HIT = "MONSTER_ATTACK_HIT",
+  MONSTER_ATTACK_MISS = "MONSTER_ATTACK_MISS",
+  DAMAGE_DEALT = "DAMAGE_DEALT",
+  HEALING_RECEIVED = "HEALING_RECEIVED",
+  STATUS_EFFECT_APPLIED = "STATUS_EFFECT_APPLIED",
+  STATUS_EFFECT_REMOVED = "STATUS_EFFECT_REMOVED",
+  CRITICAL_HIT = "CRITICAL_HIT",
+  PLAYER_DEATH = "PLAYER_DEATH",
+  MONSTER_DEATH = "MONSTER_DEATH",
+  MONSTER_SPAWN = "MONSTER_SPAWN",
+  COMBAT_START = "COMBAT_START",
+  COMBAT_END = "COMBAT_END",
+  PLAYER_LEVEL_UP = "PLAYER_LEVEL_UP",
+  ITEM_DROP = "ITEM_DROP",
 }
 
 // 即時戰鬥事件
@@ -169,27 +169,27 @@ export interface RealtimeCombatEvent {
     newPosition?: Vector2D;
     direction?: number;
     speed?: number;
-    
+
     // 攻擊事件
     attackType?: string;
     damage?: number;
     healing?: number;
     isCritical?: boolean;
     hitPosition?: Vector2D;
-    
+
     // 投射物相關
     projectileType?: string;
     damageType?: string;
     killedBy?: string;
     explosionRadius?: number;
-    
+
     // 戰鬥結果
     isDodged?: boolean;
     distanceFromCenter?: number;
-    
-    // 狀態效果事件  
+
+    // 狀態效果事件
     statusEffect?: StatusEffect;
-    
+
     // 其他數據
     experience?: number;
     gold?: number;
@@ -230,17 +230,17 @@ export interface RealtimeCombatRoom {
 
 // 玩家輸入動作
 export interface PlayerInputAction {
-  type: 'MOVE' | 'ATTACK' | 'CAST_SKILL' | 'USE_ITEM' | 'STOP';
+  type: "MOVE" | "ATTACK" | "CAST_SKILL" | "USE_ITEM" | "STOP";
   timestamp: Date;
   data: {
     // 移動相關
     targetPosition?: Vector2D;
     direction?: number;
-    
+
     // 攻擊相關
-    attackType?: 'MELEE' | 'RANGED' | 'MAGIC';
+    attackType?: "MELEE" | "RANGED" | "MAGIC";
     targetMonsterIds?: string[];
-    
+
     // 技能/物品相關
     skillId?: string;
     itemId?: string;
@@ -250,16 +250,16 @@ export interface PlayerInputAction {
 // WebSocket 訊息類型
 export enum WSMessageType {
   // 客戶端 -> 伺服器
-  JOIN_COMBAT = 'JOIN_COMBAT',
-  LEAVE_COMBAT = 'LEAVE_COMBAT',
-  PLAYER_ACTION = 'PLAYER_ACTION',
-  
-  // 伺服器 -> 客戶端  
-  COMBAT_STATE_UPDATE = 'COMBAT_STATE_UPDATE',
-  COMBAT_EVENT = 'COMBAT_EVENT',
-  PLAYER_JOINED = 'PLAYER_JOINED',
-  PLAYER_LEFT = 'PLAYER_LEFT',
-  ERROR = 'ERROR'
+  JOIN_COMBAT = "JOIN_COMBAT",
+  LEAVE_COMBAT = "LEAVE_COMBAT",
+  PLAYER_ACTION = "PLAYER_ACTION",
+
+  // 伺服器 -> 客戶端
+  COMBAT_STATE_UPDATE = "COMBAT_STATE_UPDATE",
+  COMBAT_EVENT = "COMBAT_EVENT",
+  PLAYER_JOINED = "PLAYER_JOINED",
+  PLAYER_LEFT = "PLAYER_LEFT",
+  ERROR = "ERROR",
 }
 
 // WebSocket 訊息格式
@@ -271,11 +271,11 @@ export interface WSMessage {
 
 // 戰鬥配置
 export interface CombatConfig {
-  tickRate: number;        // 伺服器更新頻率 (次/秒)
+  tickRate: number; // 伺服器更新頻率 (次/秒)
   maxCombatDuration: number; // 最大戰鬥時間 (毫秒)
   playerRespawnTime: number; // 玩家復活時間 (毫秒)
   monsterRespawnTime: number; // 怪物重生時間 (毫秒)
-  aggroDecayRate: number;  // 仇恨值衰減速率
+  aggroDecayRate: number; // 仇恨值衰減速率
   statusEffectTickInterval: number; // 狀態效果生效間隔
   movementSyncThreshold: number; // 位置同步閾值
 }

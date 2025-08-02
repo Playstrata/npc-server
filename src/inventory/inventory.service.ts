@@ -1,7 +1,12 @@
-import { Injectable, Logger, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ItemsService } from '../items/items.service';
-import { ItemQuality, BaseItem } from '../items/items.types';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { ItemsService } from "../items/items.service";
+import { ItemQuality, BaseItem } from "../items/items.types";
 
 // 背包物品接口
 export interface InventoryItem {
@@ -41,7 +46,7 @@ export interface CarryingCapacityInfo {
   availableCapacity: number;
   usagePercentage: number;
   isOverloaded: boolean;
-  capacityLevel: 'LIGHT' | 'NORMAL' | 'HEAVY' | 'OVERLOADED';
+  capacityLevel: "LIGHT" | "NORMAL" | "HEAVY" | "OVERLOADED";
 }
 
 @Injectable()
@@ -50,7 +55,7 @@ export class InventoryService {
 
   constructor(
     private prisma: PrismaService,
-    private itemsService: ItemsService
+    private itemsService: ItemsService,
   ) {}
 
   /**
@@ -59,10 +64,7 @@ export class InventoryService {
   async getPlayerInventory(characterId: string): Promise<InventoryItem[]> {
     const inventoryItems = await this.prisma.playerInventory.findMany({
       where: { characterId },
-      orderBy: [
-        { slot: 'asc' },
-        { acquiredAt: 'desc' }
-      ]
+      orderBy: [{ slot: "asc" }, { acquiredAt: "desc" }],
     });
 
     const result: InventoryItem[] = [];
@@ -83,7 +85,7 @@ export class InventoryService {
           maxStack: dbItem.maxStack,
           acquiredAt: dbItem.acquiredAt,
           lastUsedAt: dbItem.lastUsedAt,
-          item: itemDetails
+          item: itemDetails,
         });
       }
     }
@@ -94,14 +96,16 @@ export class InventoryService {
   /**
    * 獲取玩家負重資訊
    */
-  async getCarryingCapacityInfo(characterId: string): Promise<CarryingCapacityInfo> {
+  async getCarryingCapacityInfo(
+    characterId: string,
+  ): Promise<CarryingCapacityInfo> {
     const character = await this.prisma.gameCharacter.findUnique({
       where: { id: characterId },
-      select: { carryingCapacity: true, currentWeight: true }
+      select: { carryingCapacity: true, currentWeight: true },
     });
 
     if (!character) {
-      throw new BadRequestException('角色不存在');
+      throw new BadRequestException("角色不存在");
     }
 
     const currentWeight = character.currentWeight;
@@ -110,15 +114,15 @@ export class InventoryService {
     const usagePercentage = (currentWeight / maxCapacity) * 100;
     const isOverloaded = currentWeight > maxCapacity;
 
-    let capacityLevel: CarryingCapacityInfo['capacityLevel'];
+    let capacityLevel: CarryingCapacityInfo["capacityLevel"];
     if (usagePercentage <= 25) {
-      capacityLevel = 'LIGHT';
+      capacityLevel = "LIGHT";
     } else if (usagePercentage <= 75) {
-      capacityLevel = 'NORMAL';
+      capacityLevel = "NORMAL";
     } else if (usagePercentage <= 100) {
-      capacityLevel = 'HEAVY';
+      capacityLevel = "HEAVY";
     } else {
-      capacityLevel = 'OVERLOADED';
+      capacityLevel = "OVERLOADED";
     }
 
     return {
@@ -127,7 +131,7 @@ export class InventoryService {
       availableCapacity,
       usagePercentage,
       isOverloaded,
-      capacityLevel
+      capacityLevel,
     };
   }
 
@@ -138,13 +142,13 @@ export class InventoryService {
     characterId: string,
     itemId: string,
     quantity: number,
-    quality: ItemQuality = ItemQuality.COMMON
+    quality: ItemQuality = ItemQuality.COMMON,
   ): Promise<InventoryOperationResult> {
     const item = this.itemsService.getItemById(itemId);
     if (!item) {
       return {
         success: false,
-        message: '物品不存在'
+        message: "物品不存在",
       };
     }
 
@@ -156,7 +160,7 @@ export class InventoryService {
     if (capacityInfo.availableCapacity < totalAddWeight) {
       return {
         success: false,
-        message: `負重不足，需要 ${totalAddWeight.toFixed(1)}kg，只有 ${capacityInfo.availableCapacity.toFixed(1)}kg 可用空間`
+        message: `負重不足，需要 ${totalAddWeight.toFixed(1)}kg，只有 ${capacityInfo.availableCapacity.toFixed(1)}kg 可用空間`,
       };
     }
 
@@ -165,12 +169,16 @@ export class InventoryService {
       where: {
         characterId,
         itemId,
-        quality: quality.toString()
-      }
+        quality: quality.toString(),
+      },
     });
 
     let affectedItems: InventoryItem[] = [];
-    let overflowItems: Array<{ itemId: string; quantity: number; quality: ItemQuality }> = [];
+    let overflowItems: Array<{
+      itemId: string;
+      quantity: number;
+      quality: ItemQuality;
+    }> = [];
 
     if (existingItem && existingItem.isStackable) {
       // 堆疊邏輯
@@ -184,8 +192,9 @@ export class InventoryService {
           where: { id: existingItem.id },
           data: {
             quantity: existingItem.quantity + stackableQuantity,
-            totalWeight: (existingItem.quantity + stackableQuantity) * itemWeight
-          }
+            totalWeight:
+              (existingItem.quantity + stackableQuantity) * itemWeight,
+          },
         });
 
         // 建構回傳的 InventoryItem
@@ -203,7 +212,7 @@ export class InventoryService {
           maxStack: updatedItem.maxStack,
           acquiredAt: updatedItem.acquiredAt,
           lastUsedAt: updatedItem.lastUsedAt,
-          item
+          item,
         };
 
         affectedItems.push(inventoryItem);
@@ -213,7 +222,7 @@ export class InventoryService {
         overflowItems.push({
           itemId,
           quantity: overflowQuantity,
-          quality
+          quality,
         });
       }
     } else {
@@ -230,8 +239,8 @@ export class InventoryService {
           totalVolume: (item.attributes?.volume || 0) * quantity,
           isStackable: item.stackable || false,
           maxStack: item.maxStack || 1,
-          condition: 100.0
-        }
+          condition: 100.0,
+        },
       });
 
       const inventoryItem: InventoryItem = {
@@ -248,7 +257,7 @@ export class InventoryService {
         maxStack: newItem.maxStack,
         acquiredAt: newItem.acquiredAt,
         lastUsedAt: newItem.lastUsedAt,
-        item
+        item,
       };
 
       affectedItems.push(inventoryItem);
@@ -258,14 +267,16 @@ export class InventoryService {
     await this.updateCharacterWeight(characterId);
     const newCapacityInfo = await this.getCarryingCapacityInfo(characterId);
 
-    this.logger.log(`玩家 ${characterId} 添加物品 ${quantity}x ${itemId} (${quality})，新重量: ${newCapacityInfo.currentWeight.toFixed(1)}kg`);
+    this.logger.log(
+      `玩家 ${characterId} 添加物品 ${quantity}x ${itemId} (${quality})，新重量: ${newCapacityInfo.currentWeight.toFixed(1)}kg`,
+    );
 
     return {
       success: true,
       message: `成功添加 ${quantity}x ${item.name}`,
       newWeight: newCapacityInfo.currentWeight,
       affectedItems,
-      overflowItems: overflowItems.length > 0 ? overflowItems : undefined
+      overflowItems: overflowItems.length > 0 ? overflowItems : undefined,
     };
   }
 
@@ -276,11 +287,11 @@ export class InventoryService {
     characterId: string,
     itemId: string,
     quantity: number,
-    quality?: ItemQuality
+    quality?: ItemQuality,
   ): Promise<InventoryOperationResult> {
     const whereClause: any = {
       characterId,
-      itemId
+      itemId,
     };
 
     if (quality) {
@@ -288,20 +299,20 @@ export class InventoryService {
     }
 
     const existingItem = await this.prisma.playerInventory.findFirst({
-      where: whereClause
+      where: whereClause,
     });
 
     if (!existingItem) {
       return {
         success: false,
-        message: '背包中沒有這個物品'
+        message: "背包中沒有這個物品",
       };
     }
 
     if (existingItem.quantity < quantity) {
       return {
         success: false,
-        message: `物品數量不足，背包中只有 ${existingItem.quantity} 個`
+        message: `物品數量不足，背包中只有 ${existingItem.quantity} 個`,
       };
     }
 
@@ -309,7 +320,7 @@ export class InventoryService {
     if (!item) {
       return {
         success: false,
-        message: '物品資料錯誤'
+        message: "物品資料錯誤",
       };
     }
 
@@ -318,7 +329,7 @@ export class InventoryService {
     if (existingItem.quantity === quantity) {
       // 完全移除
       await this.prisma.playerInventory.delete({
-        where: { id: existingItem.id }
+        where: { id: existingItem.id },
       });
     } else {
       // 減少數量
@@ -326,8 +337,8 @@ export class InventoryService {
         where: { id: existingItem.id },
         data: {
           quantity: existingItem.quantity - quantity,
-          totalWeight: (existingItem.quantity - quantity) * existingItem.weight
-        }
+          totalWeight: (existingItem.quantity - quantity) * existingItem.weight,
+        },
       });
 
       const inventoryItem: InventoryItem = {
@@ -344,7 +355,7 @@ export class InventoryService {
         maxStack: updatedItem.maxStack,
         acquiredAt: updatedItem.acquiredAt,
         lastUsedAt: updatedItem.lastUsedAt,
-        item
+        item,
       };
 
       affectedItems.push(inventoryItem);
@@ -354,13 +365,15 @@ export class InventoryService {
     await this.updateCharacterWeight(characterId);
     const newCapacityInfo = await this.getCarryingCapacityInfo(characterId);
 
-    this.logger.log(`玩家 ${characterId} 移除物品 ${quantity}x ${itemId}${quality ? ` (${quality})` : ''}，新重量: ${newCapacityInfo.currentWeight.toFixed(1)}kg`);
+    this.logger.log(
+      `玩家 ${characterId} 移除物品 ${quantity}x ${itemId}${quality ? ` (${quality})` : ""}，新重量: ${newCapacityInfo.currentWeight.toFixed(1)}kg`,
+    );
 
     return {
       success: true,
       message: `成功移除 ${quantity}x ${item.name}`,
       newWeight: newCapacityInfo.currentWeight,
-      affectedItems
+      affectedItems,
     };
   }
 
@@ -371,11 +384,11 @@ export class InventoryService {
     characterId: string,
     itemId: string,
     requiredQuantity: number,
-    quality?: ItemQuality
+    quality?: ItemQuality,
   ): Promise<boolean> {
     const whereClause: any = {
       characterId,
-      itemId
+      itemId,
     };
 
     if (quality) {
@@ -383,7 +396,7 @@ export class InventoryService {
     }
 
     const item = await this.prisma.playerInventory.findFirst({
-      where: whereClause
+      where: whereClause,
     });
 
     return item ? item.quantity >= requiredQuantity : false;
@@ -394,7 +407,7 @@ export class InventoryService {
    */
   async calculateMaxCarryableQuantity(
     characterId: string,
-    itemId: string
+    itemId: string,
   ): Promise<number> {
     const item = this.itemsService.getItemById(itemId);
     if (!item || !item.attributes?.weight) {
@@ -412,15 +425,15 @@ export class InventoryService {
     const totalWeight = await this.prisma.playerInventory.aggregate({
       where: { characterId },
       _sum: {
-        totalWeight: true
-      }
+        totalWeight: true,
+      },
     });
 
     await this.prisma.gameCharacter.update({
       where: { id: characterId },
       data: {
-        currentWeight: totalWeight._sum.totalWeight || 0
-      }
+        currentWeight: totalWeight._sum.totalWeight || 0,
+      },
     });
   }
 
@@ -429,37 +442,41 @@ export class InventoryService {
    */
   async increaseCarryingCapacity(
     characterId: string,
-    amount: number
+    amount: number,
   ): Promise<{ success: boolean; newCapacity: number }> {
     const updatedCharacter = await this.prisma.gameCharacter.update({
       where: { id: characterId },
       data: {
         carryingCapacity: {
-          increment: amount
-        }
-      }
+          increment: amount,
+        },
+      },
     });
 
-    this.logger.log(`玩家 ${characterId} 負重能力增加 ${amount}kg，新上限: ${updatedCharacter.carryingCapacity}kg`);
+    this.logger.log(
+      `玩家 ${characterId} 負重能力增加 ${amount}kg，新上限: ${updatedCharacter.carryingCapacity}kg`,
+    );
 
     return {
       success: true,
-      newCapacity: updatedCharacter.carryingCapacity
+      newCapacity: updatedCharacter.carryingCapacity,
     };
   }
 
   /**
    * 整理背包 (重新排列槽位)
    */
-  async organizeInventory(characterId: string): Promise<InventoryOperationResult> {
+  async organizeInventory(
+    characterId: string,
+  ): Promise<InventoryOperationResult> {
     const inventoryItems = await this.prisma.playerInventory.findMany({
       where: { characterId },
       orderBy: [
-        { isEquipped: 'desc' }, // 裝備的物品排前面
-        { itemId: 'asc' },      // 同類物品聚集
-        { quality: 'desc' },    // 高品質在前
-        { acquiredAt: 'asc' }   // 獲得時間早的在前
-      ]
+        { isEquipped: "desc" }, // 裝備的物品排前面
+        { itemId: "asc" }, // 同類物品聚集
+        { quality: "desc" }, // 高品質在前
+        { acquiredAt: "asc" }, // 獲得時間早的在前
+      ],
     });
 
     // 重新分配槽位編號
@@ -471,8 +488,8 @@ export class InventoryService {
         updates.push(
           this.prisma.playerInventory.update({
             where: { id: item.id },
-            data: { slot: slotNumber }
-          })
+            data: { slot: slotNumber },
+          }),
         );
       }
       slotNumber++;
@@ -480,12 +497,14 @@ export class InventoryService {
 
     if (updates.length > 0) {
       await Promise.all(updates);
-      this.logger.log(`玩家 ${characterId} 整理背包，重新排列了 ${updates.length} 個物品`);
+      this.logger.log(
+        `玩家 ${characterId} 整理背包，重新排列了 ${updates.length} 個物品`,
+      );
     }
 
     return {
       success: true,
-      message: `背包整理完成，調整了 ${updates.length} 個物品的位置`
+      message: `背包整理完成，調整了 ${updates.length} 個物品的位置`,
     };
   }
 }

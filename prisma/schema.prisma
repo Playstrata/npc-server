@@ -272,7 +272,7 @@ model User {
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
-  username      String         @unique
+  username      String?        @unique
   accounts      Account[]
   gameCharacter GameCharacter?
   sessions      Session[]
@@ -322,6 +322,20 @@ model Verification {
   updatedAt  DateTime?
 
   @@map("verification")
+}
+
+model OAuthProvider {
+  id          String   @id @default(cuid())
+  providerId  String   @unique @map("provider_id")
+  name        String
+  description String
+  iconName    String   @map("icon_name")
+  enabled     Boolean  @default(true)
+  displayOrder Int     @default(0) @map("display_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("oauth_providers")
 }
 
 // Banking and Economic Models

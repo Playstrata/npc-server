@@ -29,50 +29,50 @@ export interface CombatStats {
 
 // 任務狀態
 export enum QuestStatus {
-  AVAILABLE = 'available',
-  ACCEPTED = 'accepted',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  TURNED_IN = 'turned_in',
-  FAILED = 'failed',
+  AVAILABLE = "available",
+  ACCEPTED = "accepted",
+  IN_PROGRESS = "in_progress",
+  COMPLETED = "completed",
+  TURNED_IN = "turned_in",
+  FAILED = "failed",
 }
 
 // 任務類型
 export enum QuestType {
-  KILL = 'kill',           // 擊殺任務
-  COLLECT = 'collect',     // 收集任務
-  DELIVER = 'deliver',     // 運送任務
-  TALK = 'talk',           // 對話任務
-  EXPLORE = 'explore',     // 探索任務
-  CRAFT = 'craft',         // 製作任務
+  KILL = "kill", // 擊殺任務
+  COLLECT = "collect", // 收集任務
+  DELIVER = "deliver", // 運送任務
+  TALK = "talk", // 對話任務
+  EXPLORE = "explore", // 探索任務
+  CRAFT = "craft", // 製作任務
 }
 
 // 物品稀有度
 export enum ItemRarity {
-  COMMON = 'common',
-  UNCOMMON = 'uncommon',
-  RARE = 'rare',
-  EPIC = 'epic',
-  LEGENDARY = 'legendary',
+  COMMON = "common",
+  UNCOMMON = "uncommon",
+  RARE = "rare",
+  EPIC = "epic",
+  LEGENDARY = "legendary",
 }
 
 // 物品類型
 export enum ItemType {
-  WEAPON = 'weapon',
-  ARMOR = 'armor',
-  ACCESSORY = 'accessory',
-  CONSUMABLE = 'consumable',
-  MATERIAL = 'material',
-  QUEST = 'quest',
+  WEAPON = "weapon",
+  ARMOR = "armor",
+  ACCESSORY = "accessory",
+  CONSUMABLE = "consumable",
+  MATERIAL = "material",
+  QUEST = "quest",
 }
 
 // NPC 類型
 export enum NpcType {
-  QUEST_GIVER = 'quest_giver',
-  MERCHANT = 'merchant',
-  GUARD = 'guard',
-  VILLAGER = 'villager',
-  MONSTER = 'monster',
+  QUEST_GIVER = "quest_giver",
+  MERCHANT = "merchant",
+  GUARD = "guard",
+  VILLAGER = "villager",
+  MONSTER = "monster",
 }
 
 // 遊戲位置

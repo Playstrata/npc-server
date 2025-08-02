@@ -1,15 +1,15 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ItemsService } from '../items/items.service';
-import { InventoryService } from '../inventory/inventory.service';
-import { ItemQuality, ItemType } from '../items/items.types';
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { ItemsService } from "../items/items.service";
+import { InventoryService } from "../inventory/inventory.service";
+import { ItemQuality, ItemType } from "../items/items.types";
 
 // 裝備槽位類型
 export enum EquipmentSlot {
-  BACKPACK = 'BACKPACK',
-  WEAPON = 'WEAPON',
-  ARMOR = 'ARMOR',
-  HANDS = 'HANDS' // 雙手（無裝備時）
+  BACKPACK = "BACKPACK",
+  WEAPON = "WEAPON",
+  ARMOR = "ARMOR",
+  HANDS = "HANDS", // 雙手（無裝備時）
 }
 
 // 裝備狀態
@@ -19,9 +19,9 @@ export interface EquipmentStatus {
     name: string;
     quality: ItemQuality;
     condition: number;
-    capacityBonus: number;    // 重量加成(公斤)
-    volumeBonus: number;      // 體積加成(公升)
-    slots: number;            // 格子數量
+    capacityBonus: number; // 重量加成(公斤)
+    volumeBonus: number; // 體積加成(公升)
+    slots: number; // 格子數量
   };
   weapon?: {
     itemId: string;
@@ -42,17 +42,17 @@ export interface EquipmentStatus {
 
 // 容量計算結果
 export interface CapacityCalculation {
-  baseCapacity: number;        // 基礎容量（雙手）
-  strengthBonus: number;       // 力量加成
-  vitalityBonus: number;       // 體力加成
-  backpackBonus: number;       // 背包加成
-  totalCapacity: number;       // 總容量
-  
-  baseVolume: number;          // 基礎體積
+  baseCapacity: number; // 基礎容量（雙手）
+  strengthBonus: number; // 力量加成
+  vitalityBonus: number; // 體力加成
+  backpackBonus: number; // 背包加成
+  totalCapacity: number; // 總容量
+
+  baseVolume: number; // 基礎體積
   backpackVolumeBonus: number; // 背包體積加成
-  totalVolume: number;         // 總體積
-  
-  effectiveSlots: number;      // 有效格子數
+  totalVolume: number; // 總體積
+
+  effectiveSlots: number; // 有效格子數
 }
 
 @Injectable()
@@ -62,7 +62,7 @@ export class EquipmentService {
   constructor(
     private prisma: PrismaService,
     private itemsService: ItemsService,
-    private inventoryService: InventoryService
+    private inventoryService: InventoryService,
   ) {}
 
   /**
@@ -79,16 +79,16 @@ export class EquipmentService {
         equippedPants: true,
         equippedShoes: true,
         equippedGloves: true,
-        equippedShield: true
-      }
+        equippedShield: true,
+      },
     });
 
     if (!character) {
-      throw new BadRequestException('角色不存在');
+      throw new BadRequestException("角色不存在");
     }
 
     const equipment: EquipmentStatus = {
-      handsOnly: !character.equippedBackpack
+      handsOnly: !character.equippedBackpack,
     };
 
     // 獲取背包資訊
@@ -98,8 +98,8 @@ export class EquipmentService {
           itemId: character.equippedBackpack,
           characterId,
           isEquipped: true,
-          equipmentSlot: EquipmentSlot.BACKPACK
-        }
+          equipmentSlot: EquipmentSlot.BACKPACK,
+        },
       });
 
       if (backpackItem) {
@@ -112,7 +112,7 @@ export class EquipmentService {
             condition: backpackItem.condition,
             capacityBonus: itemDetails.equipment?.capacityBonus || 0,
             volumeBonus: itemDetails.equipment?.volumeBonus || 0,
-            slots: itemDetails.equipment?.slots || 10
+            slots: itemDetails.equipment?.slots || 10,
           };
         }
       }
@@ -125,8 +125,8 @@ export class EquipmentService {
           itemId: character.equippedWeapon,
           characterId,
           isEquipped: true,
-          equipmentSlot: EquipmentSlot.WEAPON
-        }
+          equipmentSlot: EquipmentSlot.WEAPON,
+        },
       });
 
       if (weaponItem) {
@@ -137,7 +137,7 @@ export class EquipmentService {
             name: itemDetails.name,
             quality: weaponItem.quality as ItemQuality,
             condition: weaponItem.condition,
-            damageBonus: itemDetails.combat?.damage || 0
+            damageBonus: itemDetails.combat?.damage || 0,
           };
         }
       }
@@ -150,17 +150,17 @@ export class EquipmentService {
       character.equippedPants,
       character.equippedShoes,
       character.equippedGloves,
-      character.equippedShield
+      character.equippedShield,
     ].filter(Boolean);
-    
+
     if (armorSlots.length > 0) {
       const armorItem = await this.prisma.playerInventory.findFirst({
         where: {
           itemId: { in: armorSlots },
           characterId,
           isEquipped: true,
-          equipmentSlot: EquipmentSlot.ARMOR
-        }
+          equipmentSlot: EquipmentSlot.ARMOR,
+        },
       });
 
       if (armorItem) {
@@ -171,7 +171,7 @@ export class EquipmentService {
             name: itemDetails.name,
             quality: armorItem.quality as ItemQuality,
             condition: armorItem.condition,
-            defenseBonus: itemDetails.combat?.defense || 0
+            defenseBonus: itemDetails.combat?.defense || 0,
           };
         }
       }
@@ -186,7 +186,7 @@ export class EquipmentService {
   async equipItem(
     characterId: string,
     itemId: string,
-    equipmentSlot: EquipmentSlot
+    equipmentSlot: EquipmentSlot,
   ): Promise<{
     success: boolean;
     message: string;
@@ -198,14 +198,14 @@ export class EquipmentService {
       where: {
         characterId,
         itemId,
-        isEquipped: false
-      }
+        isEquipped: false,
+      },
     });
 
     if (!inventoryItem) {
       return {
         success: false,
-        message: '物品不在背包中或已裝備'
+        message: "物品不在背包中或已裝備",
       };
     }
 
@@ -213,7 +213,7 @@ export class EquipmentService {
     if (!itemDetails) {
       return {
         success: false,
-        message: '物品不存在'
+        message: "物品不存在",
       };
     }
 
@@ -221,25 +221,28 @@ export class EquipmentService {
     if (!this.isItemValidForSlot(itemDetails.type, equipmentSlot)) {
       return {
         success: false,
-        message: `${itemDetails.name} 無法裝備到 ${equipmentSlot} 槽位`
+        message: `${itemDetails.name} 無法裝備到 ${equipmentSlot} 槽位`,
       };
     }
 
     // 檢查是否需要卸下現有裝備
     let unequippedItem: string | undefined;
     const character = await this.prisma.gameCharacter.findUnique({
-      where: { id: characterId }
+      where: { id: characterId },
     });
 
     if (!character) {
       return {
         success: false,
-        message: '角色不存在'
+        message: "角色不存在",
       };
     }
 
     // 卸下現有裝備
-    const currentEquippedItem = this.getCurrentEquippedItem(character, equipmentSlot);
+    const currentEquippedItem = this.getCurrentEquippedItem(
+      character,
+      equipmentSlot,
+    );
     if (currentEquippedItem) {
       await this.unequipItem(characterId, equipmentSlot);
       unequippedItem = currentEquippedItem;
@@ -250,8 +253,8 @@ export class EquipmentService {
       where: { id: inventoryItem.id },
       data: {
         isEquipped: true,
-        equipmentSlot: equipmentSlot
-      }
+        equipmentSlot: equipmentSlot,
+      },
     });
 
     // 更新角色裝備記錄
@@ -270,30 +273,32 @@ export class EquipmentService {
 
     await this.prisma.gameCharacter.update({
       where: { id: characterId },
-      data: updateData
+      data: updateData,
     });
 
     // 重新計算容量
     const newCapacity = await this.calculateCapacity(characterId);
-    
+
     // 如果是背包，更新角色的容量和體積
     if (equipmentSlot === EquipmentSlot.BACKPACK) {
       await this.prisma.gameCharacter.update({
         where: { id: characterId },
         data: {
           carryingCapacity: newCapacity.totalCapacity,
-          maxVolume: newCapacity.totalVolume
-        }
+          maxVolume: newCapacity.totalVolume,
+        },
       });
     }
 
-    this.logger.log(`角色 ${characterId} 裝備了 ${itemDetails.name} 到 ${equipmentSlot} 槽位`);
+    this.logger.log(
+      `角色 ${characterId} 裝備了 ${itemDetails.name} 到 ${equipmentSlot} 槽位`,
+    );
 
     return {
       success: true,
       message: `成功裝備 ${itemDetails.name}`,
       newCapacity,
-      unequippedItem
+      unequippedItem,
     };
   }
 
@@ -302,7 +307,7 @@ export class EquipmentService {
    */
   async unequipItem(
     characterId: string,
-    equipmentSlot: EquipmentSlot
+    equipmentSlot: EquipmentSlot,
   ): Promise<{
     success: boolean;
     message: string;
@@ -310,31 +315,35 @@ export class EquipmentService {
     newCapacity?: CapacityCalculation;
   }> {
     const character = await this.prisma.gameCharacter.findUnique({
-      where: { id: characterId }
+      where: { id: characterId },
     });
 
     if (!character) {
       return {
         success: false,
-        message: '角色不存在'
+        message: "角色不存在",
       };
     }
 
-    const currentEquippedItem = this.getCurrentEquippedItem(character, equipmentSlot);
+    const currentEquippedItem = this.getCurrentEquippedItem(
+      character,
+      equipmentSlot,
+    );
     if (!currentEquippedItem) {
       return {
         success: false,
-        message: '該槽位沒有裝備任何物品'
+        message: "該槽位沒有裝備任何物品",
       };
     }
 
     // 檢查卸下背包是否會導致物品溢出
     if (equipmentSlot === EquipmentSlot.BACKPACK) {
-      const wouldOverflow = await this.checkBackpackUnequipOverflow(characterId);
+      const wouldOverflow =
+        await this.checkBackpackUnequipOverflow(characterId);
       if (wouldOverflow.hasOverflow) {
         return {
           success: false,
-          message: `無法卸下背包：會導致${wouldOverflow.overflowCount}個物品無處存放。請先清理背包。`
+          message: `無法卸下背包：會導致${wouldOverflow.overflowCount}個物品無處存放。請先清理背包。`,
         };
       }
     }
@@ -345,12 +354,12 @@ export class EquipmentService {
         characterId,
         itemId: currentEquippedItem,
         isEquipped: true,
-        equipmentSlot: equipmentSlot
+        equipmentSlot: equipmentSlot,
       },
       data: {
         isEquipped: false,
-        equipmentSlot: null
-      }
+        equipmentSlot: null,
+      },
     });
 
     // 更新角色裝備記錄
@@ -369,31 +378,33 @@ export class EquipmentService {
 
     await this.prisma.gameCharacter.update({
       where: { id: characterId },
-      data: updateData
+      data: updateData,
     });
 
     // 重新計算容量
     const newCapacity = await this.calculateCapacity(characterId);
-    
+
     // 如果是背包，更新角色的容量和體積
     if (equipmentSlot === EquipmentSlot.BACKPACK) {
       await this.prisma.gameCharacter.update({
         where: { id: characterId },
         data: {
           carryingCapacity: newCapacity.totalCapacity,
-          maxVolume: newCapacity.totalVolume
-        }
+          maxVolume: newCapacity.totalVolume,
+        },
       });
     }
 
     const itemDetails = this.itemsService.getItemById(currentEquippedItem);
-    this.logger.log(`角色 ${characterId} 卸下了 ${itemDetails?.name || currentEquippedItem} 從 ${equipmentSlot} 槽位`);
+    this.logger.log(
+      `角色 ${characterId} 卸下了 ${itemDetails?.name || currentEquippedItem} 從 ${equipmentSlot} 槽位`,
+    );
 
     return {
       success: true,
-      message: `成功卸下 ${itemDetails?.name || '裝備'}`,
+      message: `成功卸下 ${itemDetails?.name || "裝備"}`,
       unequippedItem: currentEquippedItem,
-      newCapacity
+      newCapacity,
     };
   }
 
@@ -407,12 +418,12 @@ export class EquipmentService {
         strength: true,
         baseStamina: true,
         baseCarryingCapacity: true,
-        equippedBackpack: true
-      }
+        equippedBackpack: true,
+      },
     });
 
     if (!character) {
-      throw new BadRequestException('角色不存在');
+      throw new BadRequestException("角色不存在");
     }
 
     // 基礎容量計算
@@ -426,7 +437,9 @@ export class EquipmentService {
     let effectiveSlots = 8; // 雙手默認8格
 
     if (character.equippedBackpack) {
-      const itemDetails = this.itemsService.getItemById(character.equippedBackpack);
+      const itemDetails = this.itemsService.getItemById(
+        character.equippedBackpack,
+      );
       if (itemDetails && itemDetails.equipment) {
         backpackBonus = itemDetails.equipment.capacityBonus || 0;
         backpackVolumeBonus = itemDetails.equipment.volumeBonus || 0;
@@ -434,8 +447,9 @@ export class EquipmentService {
       }
     }
 
-    const totalCapacity = baseCapacity + strengthBonus + vitalityBonus + backpackBonus;
-    
+    const totalCapacity =
+      baseCapacity + strengthBonus + vitalityBonus + backpackBonus;
+
     // 體積計算
     const baseVolume = 2.0; // 雙手基礎 2 公升
     const totalVolume = baseVolume + backpackVolumeBonus;
@@ -449,7 +463,7 @@ export class EquipmentService {
       baseVolume,
       backpackVolumeBonus,
       totalVolume,
-      effectiveSlots
+      effectiveSlots,
     };
   }
 
@@ -463,7 +477,7 @@ export class EquipmentService {
       [EquipmentSlot.BACKPACK]: [ItemType.BACKPACK],
       [EquipmentSlot.WEAPON]: [ItemType.WEAPON],
       [EquipmentSlot.ARMOR]: [ItemType.ARMOR],
-      [EquipmentSlot.HANDS]: [] // 雙手不能裝備任何物品
+      [EquipmentSlot.HANDS]: [], // 雙手不能裝備任何物品
     };
 
     return validCombinations[slot].includes(itemType);
@@ -472,7 +486,10 @@ export class EquipmentService {
   /**
    * 獲取當前裝備的物品ID
    */
-  private getCurrentEquippedItem(character: any, slot: EquipmentSlot): string | null {
+  private getCurrentEquippedItem(
+    character: any,
+    slot: EquipmentSlot,
+  ): string | null {
     switch (slot) {
       case EquipmentSlot.BACKPACK:
         return character.equippedBackpack;
@@ -493,20 +510,21 @@ export class EquipmentService {
     overflowCount: number;
   }> {
     const currentCapacity = await this.calculateCapacity(characterId);
-    
+
     // 計算卸下背包後的容量
     const character = await this.prisma.gameCharacter.findUnique({
       where: { id: characterId },
-      select: { strength: true, baseStamina: true, baseCarryingCapacity: true }
+      select: { strength: true, baseStamina: true, baseCarryingCapacity: true },
     });
 
     if (!character) {
       return { hasOverflow: false, overflowCount: 0 };
     }
 
-    const handsOnlyCapacity = character.baseCarryingCapacity + 
-                             character.strength * 2 + 
-                             character.baseStamina * 0.5;
+    const handsOnlyCapacity =
+      character.baseCarryingCapacity +
+      character.strength * 2 +
+      character.baseStamina * 0.5;
     const handsOnlyVolume = 2.0;
     const handsOnlySlots = 8;
 
@@ -514,12 +532,18 @@ export class EquipmentService {
     const currentItems = await this.prisma.playerInventory.findMany({
       where: {
         characterId,
-        isEquipped: false // 只計算背包中的物品
-      }
+        isEquipped: false, // 只計算背包中的物品
+      },
     });
 
-    const totalWeight = currentItems.reduce((sum, item) => sum + item.totalWeight, 0);
-    const totalVolume = currentItems.reduce((sum, item) => sum + item.totalVolume, 0);
+    const totalWeight = currentItems.reduce(
+      (sum, item) => sum + item.totalWeight,
+      0,
+    );
+    const totalVolume = currentItems.reduce(
+      (sum, item) => sum + item.totalVolume,
+      0,
+    );
     const itemCount = currentItems.length;
 
     const weightOverflow = totalWeight > handsOnlyCapacity;

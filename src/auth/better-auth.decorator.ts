@@ -1,4 +1,4 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { createParamDecorator, ExecutionContext } from "@nestjs/common";
 
 // 獲取當前用戶的裝飾器
 export const CurrentUser = createParamDecorator(
