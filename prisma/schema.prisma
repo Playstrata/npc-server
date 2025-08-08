@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -7,8 +8,128 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model BankAccount {
+  id               String            @id @default(cuid())
+  characterId      String            @unique @map("character_id")
+  accountType      String            @default("BASIC") @map("account_type")
+  balance          Float             @default(0.0)
+  creditScore      Int               @default(500) @map("credit_score")
+  creditLimit      Float             @default(1000.0) @map("credit_limit")
+  interestRate     Float             @default(0.05) @map("interest_rate")
+  accountStatus    String            @default("ACTIVE") @map("account_status")
+  openedAt         DateTime          @default(now()) @map("opened_at")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  gameCharacter    GameCharacter     @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  bankTransactions BankTransaction[]
+  loans            Loan[]
+
+  @@map("bank_accounts")
+}
+
+model BankTransaction {
+  id              String      @id @default(cuid())
+  bankAccountId   String      @map("bank_account_id")
+  transactionType String      @map("transaction_type")
+  amount          Float
+  balanceAfter    Float       @map("balance_after")
+  description     String?
+  timestamp       DateTime    @default(now())
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+  bankAccount     BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+
+  @@map("bank_transactions")
+}
+
+model CharacterKnowledge {
+  id            String        @id @default(cuid())
+  characterId   String        @map("character_id")
+  skillType     String        @map("skill_type")
+  knowledgeType String        @map("knowledge_type")
+  knowledgeName String        @map("knowledge_name")
+  description   String?
+  proficiency   Int           @default(0)
+  learnedAt     DateTime      @default(now()) @map("learned_at")
+  teacherNpcId  String?       @map("teacher_npc_id")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  gameCharacter GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([characterId, skillType, knowledgeName])
+  @@map("character_knowledges")
+}
+
+model CharacterSkill {
+  id                   String                 @id @default(cuid())
+  characterId          String                 @map("character_id")
+  skillType            String                 @map("skill_type")
+  experience           Int                    @default(0)
+  level                String                 @default("NOVICE")
+  unlockedAt           DateTime               @default(now()) @map("unlocked_at")
+  lastPracticed        DateTime?              @map("last_practiced")
+  createdAt            DateTime               @default(now()) @map("created_at")
+  updatedAt            DateTime               @updatedAt @map("updated_at")
+  gameCharacter        GameCharacter          @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  skillPracticeHistory SkillPracticeHistory[]
+
+  @@unique([characterId, skillType])
+  @@map("character_skills")
+}
+
+model DeliveryQuest {
+  id                String    @id @default(cuid())
+  questId           String    @unique @map("quest_id")
+  deliveryType      String    @map("delivery_type")
+  fromNpcId         String    @map("from_npc_id")
+  toNpcId           String    @map("to_npc_id")
+  fromLocation      String    @map("from_location")
+  toLocation        String    @map("to_location")
+  itemId            String    @map("item_id")
+  itemQuality       String    @map("item_quality")
+  quantity          Int
+  totalWeight       Float     @map("total_weight")
+  requiredCapacity  Float     @map("required_capacity")
+  timeLimit         Int?      @map("time_limit")
+  distance          Float     @default(0.0)
+  difficulty        String    @default("EASY")
+  goldReward        Int       @map("gold_reward")
+  experienceReward  Int       @map("experience_reward")
+  reputationReward  Int       @map("reputation_reward")
+  status            String    @default("AVAILABLE")
+  assignedTo        String?   @map("assigned_to")
+  startedAt         DateTime? @map("started_at")
+  completedAt       DateTime? @map("completed_at")
+  pickupConfirmed   Boolean   @default(false) @map("pickup_confirmed")
+  deliveryConfirmed Boolean   @default(false) @map("delivery_confirmed")
+  currentLocation   String?   @map("current_location")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@map("delivery_quests")
+}
+
 model GameCharacter {
-  id                     String               @id @default(uuid())
+  id                     String               @id @default(cuid())
   characterName          String               @map("character_name")
   level                  Int                  @default(1)
   experience             Int                  @default(0)
@@ -55,162 +176,69 @@ model GameCharacter {
   equippedShirt          String?              @map("equipped_shirt")
   equippedShoes          String?              @map("equipped_shoes")
   luckPercentage         Float                @default(50.0) @map("luck_percentage")
-  knowledges             CharacterKnowledge[]
-  skills                 CharacterSkill[]
-  user                   User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bankAccounts           BankAccount?
+  characterKnowledges    CharacterKnowledge[]
+  characterSkills        CharacterSkill[]
+  user                   User                 @relation("UserGameCharacter", fields: [userId], references: [id], onDelete: Cascade)
   jobChangeHistory       JobChangeHistory[]
-  magicalStorageItems    MagicalStorage[]
-  inventoryItems         PlayerInventory[]
-  bankAccounts           BankAccount[]
+  magicalStorage         MagicalStorage[]
+  playerInventories      PlayerInventory[]
 
   @@map("game_characters")
 }
 
-model CharacterSkill {
-  id              String                 @id @default(cuid())
-  characterId     String                 @map("character_id")
-  skillType       String                 @map("skill_type")
-  experience      Int                    @default(0)
-  level           String                 @default("NOVICE")
-  unlockedAt      DateTime               @default(now()) @map("unlocked_at")
-  lastPracticed   DateTime?              @map("last_practiced")
-  createdAt       DateTime               @default(now()) @map("created_at")
-  updatedAt       DateTime               @updatedAt @map("updated_at")
-  character       GameCharacter          @relation(fields: [characterId], references: [id], onDelete: Cascade)
-  practiceHistory SkillPracticeHistory[]
+model JobChangeHistory {
+  id             String        @id @default(cuid())
+  characterId    String        @map("character_id")
+  fromClass      String        @map("from_class")
+  toClass        String        @map("to_class")
+  changedAt      DateTime      @default(now()) @map("changed_at")
+  npcTrainerId   String        @map("npc_trainer_id")
+  costPaid       Int           @map("cost_paid")
+  levelAtChange  Int           @map("level_at_change")
+  notes          String?
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  gameCharacters GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
-  @@unique([characterId, skillType])
-  @@map("character_skills")
+  @@map("job_change_history")
 }
 
-model CharacterKnowledge {
-  id            String        @id @default(cuid())
-  characterId   String        @map("character_id")
-  skillType     String        @map("skill_type")
-  knowledgeType String        @map("knowledge_type")
-  knowledgeName String        @map("knowledge_name")
-  description   String?
-  proficiency   Int           @default(0)
-  learnedAt     DateTime      @default(now()) @map("learned_at")
-  teacherNpcId  String?       @map("teacher_npc_id")
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
-  character     GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+model LoanPayment {
+  id            String   @id @default(cuid())
+  loanId        String   @map("loan_id")
+  amount        Float
+  paymentDate   DateTime @map("payment_date")
+  principalPaid Float    @map("principal_paid")
+  interestPaid  Float    @map("interest_paid")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  loans         Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
 
-  @@unique([characterId, skillType, knowledgeName])
-  @@map("character_knowledges")
+  @@map("loan_payments")
 }
 
-model SkillPracticeHistory {
-  id                String         @id @default(cuid())
-  skillId           String         @map("skill_id")
-  practiceType      String         @map("practice_type")
-  practiceIntensity String         @map("practice_intensity")
-  experienceGained  Int            @map("experience_gained")
-  proficiencyGained Int            @map("proficiency_gained")
-  knowledgeUsed     String?        @map("knowledge_used")
-  timestamp         DateTime       @default(now())
-  skill             CharacterSkill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+model Loan {
+  id               String        @id @default(cuid())
+  bankAccountId    String        @map("bank_account_id")
+  principalAmount  Float         @map("principal_amount")
+  interestRate     Float         @map("interest_rate")
+  termMonths       Int           @map("term_months")
+  monthlyPayment   Float         @map("monthly_payment")
+  remainingBalance Float         @map("remaining_balance")
+  status           String        @default("ACTIVE")
+  loanPurpose      String        @map("loan_purpose")
+  nextPaymentDue   DateTime?     @map("next_payment_due")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+  loanPayments     LoanPayment[]
+  bankAccounts     BankAccount   @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
 
-  @@map("skill_practice_history")
-}
-
-model SkillDecayLog {
-  id                    String   @id @default(cuid())
-  characterId           String   @map("character_id")
-  skillType             String   @map("skill_type")
-  knowledgeName         String   @map("knowledge_name")
-  eventType             String   @map("event_type")
-  originalValue         Int      @map("original_value")
-  newValue              Int      @map("new_value")
-  decayAmount           Int      @map("decay_amount")
-  daysSinceLastPractice Int      @map("days_since_last_practice")
-  action                String?
-  timestamp             DateTime @default(now())
-
-  @@map("skill_decay_logs")
-}
-
-model PlayerInventory {
-  id            String        @id @default(uuid())
-  characterId   String        @map("character_id")
-  itemId        String        @map("item_id")
-  quantity      Int           @default(1)
-  quality       String        @default("COMMON")
-  weight        Float
-  totalWeight   Float
-  volume        Float
-  totalVolume   Float
-  slot          Int?
-  isEquipped    Boolean       @default(false) @map("is_equipped")
-  equipmentSlot String?       @map("equipment_slot")
-  condition     Float         @default(100.0)
-  isStackable   Boolean       @default(true) @map("is_stackable")
-  maxStack      Int           @default(99) @map("max_stack")
-  acquiredAt    DateTime      @default(now()) @map("acquired_at")
-  lastUsedAt    DateTime?     @map("last_used_at")
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
-  character     GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
-
-  @@unique([characterId, itemId, quality])
-  @@map("player_inventories")
-}
-
-model DeliveryQuest {
-  id                String    @id @default(uuid())
-  questId           String    @unique @map("quest_id")
-  deliveryType      String    @map("delivery_type")
-  fromNpcId         String    @map("from_npc_id")
-  toNpcId           String    @map("to_npc_id")
-  fromLocation      String    @map("from_location")
-  toLocation        String    @map("to_location")
-  itemId            String    @map("item_id")
-  itemQuality       String    @map("item_quality")
-  quantity          Int
-  totalWeight       Float     @map("total_weight")
-  requiredCapacity  Float     @map("required_capacity")
-  timeLimit         Int?      @map("time_limit")
-  distance          Float     @default(0.0)
-  difficulty        String    @default("EASY")
-  goldReward        Int       @map("gold_reward")
-  experienceReward  Int       @map("experience_reward")
-  reputationReward  Int       @map("reputation_reward")
-  status            String    @default("AVAILABLE")
-  assignedTo        String?   @map("assigned_to")
-  startedAt         DateTime? @map("started_at")
-  completedAt       DateTime? @map("completed_at")
-  pickupConfirmed   Boolean   @default(false) @map("pickup_confirmed")
-  deliveryConfirmed Boolean   @default(false) @map("delivery_confirmed")
-  currentLocation   String?   @map("current_location")
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
-
-  @@map("delivery_quests")
-}
-
-model NPCDeliveryRoute {
-  id               String    @id @default(uuid())
-  deliveryNpcId    String    @map("delivery_npc_id")
-  routeName        String    @map("route_name")
-  startLocation    String    @map("start_location")
-  endLocation      String    @map("end_location")
-  waypoints        String
-  totalDistance    Float     @map("total_distance")
-  estimatedTime    Int       @map("estimated_time")
-  isActive         Boolean   @default(true) @map("is_active")
-  priority         Int       @default(5)
-  frequency        String    @default("DAILY")
-  lastRun          DateTime? @map("last_run")
-  nextScheduledRun DateTime? @map("next_scheduled_run")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
-
-  @@map("npc_delivery_routes")
+  @@map("loans")
 }
 
 model LogisticsTracking {
-  id                String    @id @default(uuid())
+  id                String    @id @default(cuid())
   trackingNumber    String    @unique @map("tracking_number")
   deliveryQuestId   String?   @map("delivery_quest_id")
   routeId           String?   @map("route_id")
@@ -232,7 +260,7 @@ model LogisticsTracking {
 }
 
 model MagicalStorage {
-  id             String        @id @default(uuid())
+  id             String        @id @default(cuid())
   characterId    String        @map("character_id")
   itemId         String        @map("item_id")
   quantity       Int           @default(1)
@@ -242,168 +270,434 @@ model MagicalStorage {
   lastAccessedAt DateTime?     @map("last_accessed_at")
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
-  character      GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  gameCharacter  GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@map("magical_storage")
 }
 
-model JobChangeHistory {
-  id            String        @id @default(uuid())
-  characterId   String        @map("character_id")
-  fromClass     String        @map("from_class")
-  toClass       String        @map("to_class")
-  changedAt     DateTime      @default(now()) @map("changed_at")
-  npcTrainerId  String        @map("npc_trainer_id")
-  costPaid      Int           @map("cost_paid")
-  levelAtChange Int           @map("level_at_change")
-  notes         String?
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
-  character     GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+model NpcDeliveryRoute {
+  id               String    @id @default(cuid())
+  deliveryNpcId    String    @map("delivery_npc_id")
+  routeName        String    @map("route_name")
+  startLocation    String    @map("start_location")
+  endLocation      String    @map("end_location")
+  waypoints        String
+  totalDistance    Float     @map("total_distance")
+  estimatedTime    Int       @map("estimated_time")
+  isActive         Boolean   @default(true) @map("is_active")
+  priority         Int       @default(5)
+  frequency        String    @default("DAILY")
+  lastRun          DateTime? @map("last_run")
+  nextScheduledRun DateTime? @map("next_scheduled_run")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
-  @@map("job_change_history")
+  @@map("npc_delivery_routes")
 }
 
-model User {
-  id            String         @id
-  name          String
-  email         String         @unique
-  emailVerified Boolean
-  image         String?
-  createdAt     DateTime
-  updatedAt     DateTime
-  username      String?        @unique
-  accounts      Account[]
-  gameCharacter GameCharacter?
-  sessions      Session[]
+model OAuthProviders {
+  id           String   @id @default(cuid())
+  providerId   String   @unique @map("provider_id")
+  name         String
+  description  String
+  iconName     String   @map("icon_name")
+  enabled      Boolean  @default(true)
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  @@map("user")
+  @@map("oauth_providers")
+}
+
+model PlayerInventory {
+  id              String        @id @default(cuid())
+  character_id    String
+  item_id         String
+  quantity        Int           @default(1)
+  quality         String        @default("COMMON")
+  weight          Float
+  totalWeight     Float
+  volume          Float
+  totalVolume     Float
+  slot            Int?
+  is_equipped     Boolean       @default(false)
+  equipment_slot  String?
+  condition       Float         @default(100.0)
+  is_stackable    Boolean       @default(true)
+  max_stack       Int           @default(99)
+  acquired_at     DateTime      @default(now())
+  last_used_at    DateTime?
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+  game_characters GameCharacter @relation(fields: [character_id], references: [id], onDelete: Cascade)
+
+  @@unique([character_id, item_id, quality])
+  @@map("player_inventories")
 }
 
 model Session {
-  id        String   @id
-  expiresAt DateTime
+  id        String   @id @default(cuid())
+  expiresAt DateTime @map("expires_at")
   token     String   @unique
-  createdAt DateTime
-  updatedAt DateTime
-  ipAddress String?
-  userAgent String?
-  userId    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("session")
 }
 
-model Account {
-  id                    String    @id
-  accountId             String
-  providerId            String
-  userId                String
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime
-  updatedAt             DateTime
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+model SkillDecayLog {
+  id                       String   @id @default(cuid())
+  character_id             String
+  skill_type               String
+  knowledge_name           String
+  event_type               String
+  original_value           Int
+  new_value                Int
+  decay_amount             Int
+  days_since_last_practice Int
+  action                   String?
+  timestamp                DateTime @default(now())
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
 
-  @@map("account")
+  @@map("skill_decay_logs")
+}
+
+model SkillPracticeHistory {
+  id                 String         @id @default(cuid())
+  skill_id           String
+  practice_type      String
+  practice_intensity String
+  experience_gained  Int
+  proficiency_gained Int
+  knowledge_used     String?
+  timestamp          DateTime       @default(now())
+  created_at         DateTime       @default(now())
+  updated_at         DateTime       @updatedAt
+  character_skills   CharacterSkill @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+
+  @@map("skill_practice_history")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @map("email_verified")
+  image         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  username      String?  @unique
+
+  // Game relationships
+  account        Account[]
+  gameCharacters GameCharacter? @relation("UserGameCharacter")
+  session        Session[]
+  userEmails   UserEmail[]
+  userProfile  UserProfile?
+  userSettings UserSettings?
+  userPresence UserPresence?
+
+
+
+  @@map("user")
+}
+
+model UserEmail {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  email     String
+  label     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, email])
+  @@map("user_emails")
+}
+
+model UserProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique @map("user_id")
+  displayName   String?  @map("display_name")
+  bio           String?
+  location      String?
+  motto         String?
+  title         String?
+  phone         String?
+  website       String?
+  discordTag    String?  @map("discord_tag")
+  githubUrl     String?  @map("github_url")
+  facebookUrl   String?  @map("facebook_url")
+  instagramUrl  String?  @map("instagram_url")
+  xUrl          String?  @map("x_url")
+  linkedinUrl   String?  @map("linkedin_url")
+  snapchatUrl   String?  @map("snapchat_url")
+  favoriteClass String?  @map("favorite_class")
+  playStyle     String?  @map("play_style")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model UserSettings {
+  id                String   @id @default(cuid())
+  userId            String   @unique @map("user_id")
+  cardColor         String   @default("#3B82F6") @map("card_color")
+  cardTheme         String   @default("default") @map("card_theme")
+  publicEmailChoice String?  @map("public_email_choice")
+  theme             String   @default("light")
+  language          String   @default("en")
+  pinnedForums      String[] @default([]) @map("pinned_forums")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  isProfilePublic   Boolean  @default(false) @map("is_profile_public")
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+model UserPresence {
+  userId    String    @unique @map("user_id")
+  isOnline  Boolean   @default(false) @map("is_online")
+  lastSeen  DateTime? @map("last_seen")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_presence")
 }
 
 model Verification {
-  id         String    @id
+  id         String   @id @default(cuid())
   identifier String
   value      String
-  expiresAt  DateTime
-  createdAt  DateTime?
-  updatedAt  DateTime?
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@map("verification")
 }
 
-model OAuthProvider {
-  id          String   @id @default(cuid())
-  providerId  String   @unique @map("provider_id")
-  name        String
-  description String
-  iconName    String   @map("icon_name")
-  enabled     Boolean  @default(true)
-  displayOrder Int     @default(0) @map("display_order")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+model Jwks {
+  id         String   @id @default(cuid())
+  publicKey  String   @map("public_key")
+  privateKey String   @map("private_key")
+  createdAt  DateTime @default(now()) @map("created_at")
 
-  @@map("oauth_providers")
+  @@map("jwks")
 }
 
-// Banking and Economic Models
-model BankAccount {
-  id            String   @id @default(uuid())
-  characterId   String   @unique @map("character_id")
-  accountType   String   @default("BASIC") @map("account_type")
-  balance       Float    @default(0.0)
-  creditScore   Int      @default(500) @map("credit_score")
-  creditLimit   Float    @default(1000.0) @map("credit_limit")
-  interestRate  Float    @default(0.05) @map("interest_rate")
-  accountStatus String   @default("ACTIVE") @map("account_status")
-  openedAt      DateTime @default(now()) @map("opened_at")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  
-  character     GameCharacter      @relation(fields: [characterId], references: [id], onDelete: Cascade)
-  transactions  BankTransaction[]
-  loans         Loan[]
+// Friend Request System
+model FriendRequest {
+  id         String              @id @default(cuid())
+  senderId   String              @map("sender_id")
+  receiverId String              @map("receiver_id")
+  status     FriendRequestStatus @default(PENDING)
+  message    String?
 
-  @@map("bank_accounts")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+
+  @@unique([senderId, receiverId])
+  @@map("friend_requests")
 }
 
-model BankTransaction {
-  id              String   @id @default(uuid())
-  bankAccountId   String   @map("bank_account_id")
-  transactionType String   @map("transaction_type")
-  amount          Float
-  balanceAfter    Float    @map("balance_after")
-  description     String?
-  timestamp       DateTime @default(now())
-  createdAt       DateTime @default(now()) @map("created_at")
-  
-  bankAccount     BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+// Friendship (accepted friend requests become friendships)
+model Friendship {
+  id      String @id @default(cuid())
+  user1Id String @map("user1_id")
+  user2Id String @map("user2_id")
 
-  @@map("bank_transactions")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([user1Id, user2Id])
+  @@map("friendships")
 }
 
-model Loan {
-  id               String        @id @default(uuid())
-  bankAccountId    String        @map("bank_account_id")
-  principalAmount  Float         @map("principal_amount")
-  interestRate     Float         @map("interest_rate")
-  termMonths       Int           @map("term_months")
-  monthlyPayment   Float         @map("monthly_payment")
-  remainingBalance Float         @map("remaining_balance")
-  status           String        @default("ACTIVE")
-  loanPurpose      String        @map("loan_purpose")
-  nextPaymentDue   DateTime?     @map("next_payment_due")
-  createdAt        DateTime      @default(now()) @map("created_at")
-  updatedAt        DateTime      @updatedAt @map("updated_at")
-  
-  bankAccount      BankAccount   @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
-  payments         LoanPayment[]
+// Blocked Users
+model BlockedUser {
+  id            String  @id @default(cuid())
+  blockedById   String  @map("blocked_by_id")
+  blockedUserId String  @map("blocked_user_id")
+  reason        String?
 
-  @@map("loans")
+  createdAt DateTime @default(now()) @map("created_at")
+
+
+  @@unique([blockedById, blockedUserId])
+  @@map("blocked_users")
 }
 
-model LoanPayment {
-  id            String   @id @default(uuid())
-  loanId        String   @map("loan_id")
-  amount        Float
-  paymentDate   DateTime @map("payment_date")
-  principalPaid Float    @map("principal_paid")
-  interestPaid  Float    @map("interest_paid")
-  createdAt     DateTime @default(now()) @map("created_at")
-  
-  loan          Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+// Direct Messages
+model Message {
+  id         String      @id @default(cuid())
+  senderId   String      @map("sender_id")
+  receiverId String      @map("receiver_id")
+  content    String
+  type       MessageType @default(TEXT)
 
-  @@map("loan_payments")
+  isRead      Boolean   @default(false) @map("is_read")
+  isDelivered Boolean   @default(false) @map("is_delivered")
+  readAt      DateTime? @map("read_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+
+  @@map("messages")
+}
+
+// Message Board Posts
+model Post {
+  id       String  @id @default(cuid())
+  authorId String  @map("author_id")
+  title    String?
+  content  String
+  imageUrl String? @map("image_url")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  comments Comment[]
+  likes    Like[]
+
+  @@map("posts")
+}
+
+// Comments on posts
+model Comment {
+  id       String @id @default(cuid())
+  postId   String @map("post_id")
+  authorId String @map("author_id")
+  content  String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+// Likes on posts
+model Like {
+  id     String @id @default(cuid())
+  postId String @map("post_id")
+  userId String @map("user_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("likes")
+}
+
+// Enums
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+}
+
+enum TopicType {
+  DISCUSSION
+  QUESTION
+  GUIDE
+  ANNOUNCEMENT
+}
+
+enum ForumCategory {
+  GENERAL_DISCUSSION
+  GAME_GUIDES
+  BUG_REPORTS
+  FEATURE_REQUESTS
+  TRADING_POST
+  GUILD_RECRUITMENT
+}
+
+// Forum topics
+model ForumTopic {
+  id      String        @id @default(cuid())
+  forumId ForumCategory @map("forum_id")
+  title   String
+  content String
+  type    TopicType     @default(DISCUSSION)
+  tags    String[]      @default([])
+
+  authorId String @map("author_id")
+
+  replies ForumReply[]
+  likes   ForumTopicLike[]
+
+  views    Int     @default(0)
+  isPinned Boolean @default(false) @map("is_pinned")
+  isClosed Boolean @default(false) @map("is_closed")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([forumId, createdAt])
+  @@index([forumId, updatedAt])
+  @@map("forum_topics")
+}
+
+// Forum replies
+model ForumReply {
+  id      String @id @default(cuid())
+  topicId String @map("topic_id")
+  content String
+
+  authorId String     @map("author_id")
+  topic    ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  likes ForumReplyLike[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([topicId, createdAt])
+  @@map("forum_replies")
+}
+
+// Likes on forum topics
+model ForumTopicLike {
+  id      String @id @default(cuid())
+  topicId String @map("topic_id")
+  userId  String @map("user_id")
+
+  topic ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([topicId, userId])
+  @@map("forum_topic_likes")
+}
+
+// Likes on forum replies
+model ForumReplyLike {
+  id      String @id @default(cuid())
+  replyId String @map("reply_id")
+  userId  String @map("user_id")
+
+  reply ForumReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([replyId, userId])
+  @@map("forum_reply_likes")
 }

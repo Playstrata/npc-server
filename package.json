@@ -1,7 +1,7 @@
 {
-  "name": "freedom-world-server",
+  "name": "freedom-world-npc-server",
   "version": "0.1.0",
-  "description": "2D MMO RPG Game Server using NestJS",
+  "description": "2D MMO RPG NPC & Game Logic Server using NestJS",
   "author": "Freedom World Team",
   "private": true,
   "license": "MIT",
