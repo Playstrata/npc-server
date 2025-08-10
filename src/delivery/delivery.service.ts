@@ -2,7 +2,6 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
 import { PrismaService } from "../prisma/prisma.service";
 import { ItemsService } from "../items/items.service";
-import { InventoryService } from "../inventory/inventory.service";
 import { NPCProfession, NPCType } from "../npcs/npcs.service";
 import { ItemQuality } from "../items/items.types";
 
@@ -92,7 +91,6 @@ export class DeliveryService {
   constructor(
     private prisma: PrismaService,
     private itemsService: ItemsService,
-    private inventoryService: InventoryService,
   ) {}
 
   /**
@@ -424,15 +422,8 @@ export class DeliveryService {
       };
     }
 
-    // 檢查玩家負重能力
-    const capacityInfo =
-      await this.inventoryService.getCarryingCapacityInfo(characterId);
-    if (capacityInfo.availableCapacity < quest.requiredCapacity) {
-      return {
-        success: false,
-        message: `負重不足，需要 ${quest.requiredCapacity.toFixed(1)}kg 空間，目前只有 ${capacityInfo.availableCapacity.toFixed(1)}kg`,
-      };
-    }
+    // TODO: Inventory capacity check should be handled by player-server
+    // For now, skip capacity check as inventory system is in different microservice
 
     // 接取任務
     const updatedQuest = await this.prisma.deliveryQuest.update({
